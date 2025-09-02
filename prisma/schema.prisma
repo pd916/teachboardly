@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String      @id @default(uuid())
+  name      String
+  email     String      @unique
+  password  String
+  imageUrl  String?
+  isAdmin   Boolean @default(false)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  board     Board[]
+  recording Recording[]
+  subscription Subscription[]
+}
+
+model Board {
+  id         String      @id @default(uuid())
+  userId     String
+  title      String
+  inviteCode String?     @unique
+  isArchived Boolean     @default(false)
+  status     BoardStatus @default(PREPARING)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  canvasData Json?
+  expiresAt  DateTime?
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recording  Recording[]
+
+  @@index([userId])
+}
+
+model Recording {
+  id                 String   @id @default(uuid())
+  videoUrl           String
+  userId             String
+  boardId            String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  cloudinaryPublicId String?
+  board              Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Subscription {
+  id                String               @id @default(uuid())
+  user              User                 @relation(fields: [userId], references: [id])
+  userId            String
+  paddleSubscriptionId String?           // From Paddle API
+  status            SubscriptionStatus   @default(TRIALING)
+  trialEndsAt       DateTime
+  currentPeriodEnd  DateTime?             // When the current paid period ends
+  cancelAtPeriodEnd Boolean               @default(false)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  CANCELED
+  EXPIRED
+}
+
+
+enum BoardStatus {
+  LIVE
+  PREPARING
+  PAUSED
+  ENDED
+}
