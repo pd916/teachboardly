@@ -4,10 +4,8 @@ import { Navbar } from "./_component/navbar";
 import Sidebar from "./_component/sidebar";
 
 interface CreatorLayoutProps {
-    params :{
-        username: string
-    };
     children: React.ReactNode
+     params: Promise<{ username: string }>;
 }
 
 
