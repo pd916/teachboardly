@@ -15,7 +15,7 @@ interface CreatorLayoutProps {
 
 // const MAX_FREE_BOARDS = 2;
 const CreatorLayout = async ({children, params}:CreatorLayoutProps) => {
-     const { boardId } = await params;
+     const { boardId } = params;
 
     const board = await db.board.findUnique({
         where: {
