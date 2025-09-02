@@ -14,22 +14,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@/components/ui/radio-group"
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-
-export const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters").max(50, "Name can't exceed 50 characters"),
-  email: z.string().email("Invalid email address"),
-  password: z.string()
-    .min(6, "Password must be at least 6 characters")
-    .max(18, "Password can't exceed 100 characters"),
-});
+import { formSchema } from './schema';
 
 const Page = () => {
   const router = useRouter()
