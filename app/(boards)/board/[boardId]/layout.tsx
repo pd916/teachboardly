@@ -7,15 +7,13 @@ import RightSidebar from "../../_component/right-sidebar";
 
 
 interface CreatorLayoutProps {
-    params :{
-        boardId: string
-    };
-    children: React.ReactNode
+  children: React.ReactNode
+  params: Promise<{ boardId: string }>;
 }
 
 // const MAX_FREE_BOARDS = 2;
 const CreatorLayout = async ({children, params}:CreatorLayoutProps) => {
-     const { boardId } = params;
+     const { boardId } = await params;
 
     const board = await db.board.findUnique({
         where: {
