@@ -64,7 +64,7 @@ export async function POST(req: Request) {
       transactionId: txn.id
     });
   } catch (err) {
-    console.error("Payment route error:", err.stack);
+    console.error("Payment route error:");
     return NextResponse.json(
       { error: "Failed to create transaction" },
       { status: 500 }
