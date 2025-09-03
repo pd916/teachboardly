@@ -4,20 +4,21 @@ import { NextResponse } from "next/server"
 import { getSelf } from "@/lib/auth-service";
 
 
-export async function PATCH(req:Request, {params}:{params:{boardId: string}}){
+export async function PATCH(req:Request, {params}:{ params: Promise<{ boardId: string }>}){
+    const{ boardId } = await params
     try {
         const self = await getSelf();
         if(!self) {
             return NextResponse.json("Unauthorized", {status: 401})
         }
 
-        if(!params.boardId) {
+        if(!boardId) {
             return NextResponse.json("serverId is required", {status: 400})
         }
 
         const board = await db.board.update({
             where :{
-                id: params.boardId,
+                id: boardId,
                 userId: self?.id
             }, 
             data: {
