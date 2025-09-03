@@ -7,6 +7,9 @@ import path from "path";
 
 export const recordings = async (formData:any) => {
   const self = await getSelf();
+  if (!self) {
+    throw new Error("User not found");
+  }
     const file = formData.get('file') as Blob | null;
   const boardId = formData.get('boardId') as string | null;
 
@@ -15,13 +18,15 @@ export const recordings = async (formData:any) => {
   }
 
   const arrayBuffer = await file.arrayBuffer();
+
   const buffer = Buffer.from(arrayBuffer);
+  const base64Data = buffer.toString("base64");
 
 
   const recording = await db.recording.create({
     data: {
       boardId,
-      videoUrl: buffer, // public URL path
+      videoUrl: base64Data, // public URL path
       userId:self?.id,
     },
   });
