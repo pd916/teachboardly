@@ -5,16 +5,16 @@ import { getSelf } from "@/lib/auth-service";
 import { db } from "@/lib/db";
 
 interface createViewTokenProps {
-  boardId: string | undefined;
-  currentGuest?: {
+  boardId: string;
+  currentGuest?:{
     name: string;
     id: string;
     boardId: string;
-  } | undefined;
+  }
 }
 
 export const createViewToken = async ({boardId, currentGuest}:createViewTokenProps) => {
-          const self = await getSelf();
+      const self = await getSelf();
 
      const board = await db.board.findUnique({
     where: { id: boardId },

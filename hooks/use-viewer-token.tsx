@@ -21,7 +21,15 @@ export const useViewerToken = ({boardId}:UseViewerTokenProps) => {
         
         const  createToken = async () => {
             try {
-                const result = await createViewToken({boardId, currentGuest});
+                const result = await createViewToken({
+                    boardId, 
+                    currentGuest: currentGuest as {
+                    name: string;
+                    id: string;
+                    boardId: string;
+                    }
+                
+                });
                 setToken(result.token);
                 setHostIdentity(result.hostIdentity);
 
