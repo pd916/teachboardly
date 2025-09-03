@@ -47,13 +47,15 @@ export const savedBoard = async (boardId:string, canvasData: any) => {
 
     const boardCount = await getBoardCountByUser(self?.id!);
 
-    const isProPlan = self?.plan === "PRO";
+    const subscription = self.subscription?.[0]
+
+    const isProPlan =  subscription?.status === "ACTIVE";;
 
     if (isProPlan && boardCount >= MAX_FREE_BOARDS) {
             throw new Error("Saved Board limit reached.");
         }
 
-    if(self?.plan === "FREE"){
+    if(subscription.status === "TRIALING"){
         throw new Error("Free plan users cannot save boards. Upgrade to Pro.");
     }
         
@@ -100,6 +102,8 @@ export const deleteBoardOnLeave = async (boardId:string) => {
 
   if(!self) throw new Error("Someting wnet wrong");
 
+  const subscription = self?.subscription?.[0]
+
   const existingBoard = await db.board.findUnique({
     where:{
       id:boardId,
@@ -112,7 +116,7 @@ export const deleteBoardOnLeave = async (boardId:string) => {
 
   if(!existingBoard) return;
 
-   const isPro = self.plan === 'PRO';
+   const isPro = subscription.status === 'ACTIVE';
 
    if (isPro && existingBoard.isArchived) {
     return;

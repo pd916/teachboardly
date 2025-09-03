@@ -16,6 +16,9 @@ export const getSelf = async () => {
     const currentUser = await db.user.findUnique({
         where:{
             email:user.email!
+        },
+        include:{
+            subscription:true
         }
     });
 
