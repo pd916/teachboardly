@@ -64,68 +64,6 @@ export const NavigationLinks = [
     }
 ]
 
-export const HeroIcons = [
-  {
-    icon: "/assets/interactions.png",
-    position: "top-16 left-10 sm:top-10 sm:left-20 md:top-10 md:left-62 w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14",
-  },
-  {
-    icon: "/assets/hand.png",
-    position: "top-22 right-12 md:top-17 md:right-62  transform -translate-x-1/2 w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14",
-  },
-  {
-    icon: "/assets/graduation-cap.png",
-    position: "top-42 right-34 md:top-39 md:left-132 transform -translate-x-1/2 w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14",
-  },
-  {
-    icon: "/assets/like.png",
-    position: "top-22 left-1/2 md:top-38 md:left-1/2 transform -translate-x-1/2 w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14",
-  },
-  {
-    icon: "/assets/mouse-pointer-click.png",
-    position: "top-10 right-24 md:top-6 md:right-98 w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14",
-  },
-  {
-    icon: "/assets/user-headset.png",
-    position: "bottom-12 right-20 md:top-34 md:right-94 w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14",
-  },
-  {
-    icon: "/assets/video-camera-alt.png",
-    position: "top-32 left-20 md:top-26 md:left-110 w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14",
-  },
-  {
-    icon: "/assets/whiteboard.png",
-    position: "top-7 left-1/2 md:top-5 md:left-1/2 transform -translate-x-1/2 w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14",
-  },
-  {
-    icon: "/assets/wisdom.png",
-    position: "top-4 left-32 md:top-8 md:left-99 transform -translate-x-1/2 w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14",
-  },
-]
-
-export const LaunchIcons = [
-   {
-    icon: "/assets/Humaaans - Standing.png",
-    position: "top-16 left-20 w-48 h-48 md:w-70 md:h-70 sm:top-10 sm:left-20 md:top-10 md:left-125",
-  },
-   {
-    icon: "/assets/clapperboard-play.png",
-    position: "top-20 left-25 sm:top-10 sm:left-20 md:top-20 md:left-120 transform -translate-x-1/2 w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14",
-  },
-   {
-    icon: "/assets/drawer-alt.png",
-   position: "top-50 right-15 sm:top-10 sm:left-20 md:top-60 md:left-auto md:right-120 w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14"
- },
-   {
-    icon: "/assets/pen-nib.png",
-   position: "top-20 right-25 sm:top-10 sm:left-20 md:top-20 md:left-auto md:right-130 w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14"
-  },
-   {
-    icon: "/assets/lightbulb-on.png",
-    position: "top-50 left-13 sm:top-10 sm:left-20 md:top-60 md:left-110 transform -translate-x-1/2 w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14",
-  },
-]
-
 export const FaqQuestions = [
   {
     id: 1,

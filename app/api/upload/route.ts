@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ recording });
   } catch (error) {
-    console.error('Upload failed:', error.stack);
+    console.error('Upload failed:');
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   }
 }
