@@ -63,7 +63,7 @@ export const handleCanvasMouseDown = ({
     syncShapeInStorage
 }:CanvasMouseDown) => {
     const pointer = canvas.getPointer(options.e);
-    const target = canvas.findTarget(options.e, false);
+    const target = canvas.findTarget(options.e);
 
      if (selectedShapeRef.current === 'eraser') {
         isDrawing.current = true;
