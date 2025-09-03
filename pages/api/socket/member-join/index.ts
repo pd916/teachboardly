@@ -24,7 +24,11 @@ export default async function handler(req: NextApiRequest, res:NextApiResponseSe
         inviteCode:value.link
         },
         include:{
-          user:true
+          user:{
+            include: {
+              subscription: true, // include all subscription details
+            },
+          }
         }
     });
 
@@ -34,9 +38,10 @@ export default async function handler(req: NextApiRequest, res:NextApiResponseSe
     return res.status(404).json({ error: "Board not found" });
   }
   
-  const ownerPlan = existingBoard.user.plan
+  const ownerPlan= existingBoard.user.subscription?.[0]
+
   
-  if(ownerPlan === "FREE" && members.length >= 8){
+  if(ownerPlan.status === "TRIALING" && members.length >= 8){
     return res.status(404).json({ error: "Sorry you can't join the board host didn't upgraded to pro plan" });
   }
 
