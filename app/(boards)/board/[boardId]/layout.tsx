@@ -1,8 +1,6 @@
 import { db } from "@/lib/db";
 import BoardSidebar from "../../_component/board-sidebar";
 import { getSelf } from "@/lib/auth-service";
-import { redirect } from "next/navigation";
-import { getBoardCountByUser } from "@/lib/board-service";
 import RightSidebar from "../../_component/right-sidebar";
 
 

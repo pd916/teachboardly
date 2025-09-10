@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { useGuestStore } from "@/hooks/use-guest-store";
 import { useSocket } from "../provider/socket-provider";
+import { toast } from "sonner";
 
 
 export const JoinLinkModel = () => {
@@ -59,6 +60,9 @@ export const JoinLinkModel = () => {
             setValue({ link: "", name: "" });
         }
     } catch (error) {
+        if(error){
+            toast.error("sorry Admin on free plan only 8 can join")
+        }
       console.error('Failed to redirect', error);
     } finally {
       setIsLoading(false);

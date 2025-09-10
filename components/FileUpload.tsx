@@ -3,13 +3,13 @@ import { X } from "lucide-react";
 import { UseFormSetValue } from "react-hook-form";
 
 type FormValues = {
-  name: string;
-  imageUrl: string;
+  name?: string;
+  imageUrl?: string;
   publicId?: string;
 };
 
 type FileUploadProps = {
-  value: string;
+  value?: string;
   onChange: (url: string) => void;
   setValue: UseFormSetValue<FormValues>;
 };

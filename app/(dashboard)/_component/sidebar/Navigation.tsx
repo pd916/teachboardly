@@ -14,19 +14,14 @@ export const Navigation = () => {
 
     const routes = [
         {
-            label: "Recent Session",
-            href: `/w/${user?.name}`,
-            icon:History
-        },
-        {
             label: "Saved Board",
             href: `/w/${user?.name}/saved-board`,
             icon:Save
         },
         {
-            label: "Invite Code",
-            href: `/w/${user?.name}/invite-code`,
-            icon: Send,
+            label: "Recent Session",
+            href: `/w/${user?.name}`,
+            icon:History
         },
         {
             label: "Plan Info",

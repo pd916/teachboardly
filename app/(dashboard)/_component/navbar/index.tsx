@@ -1,4 +1,4 @@
-import Actions from "./actions"
+import Actions from "../../w/[username]/(teacher)/_component/Actions"
 
 
 export const Navbar = () => {
@@ -8,7 +8,7 @@ export const Navbar = () => {
             <h1 className="text-xl font-semibold">
             Teachboardly
             </h1>
-            {/* <Actions/> */}
+          <Actions/>
         </nav>
     )
 }

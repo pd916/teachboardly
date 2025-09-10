@@ -5,15 +5,28 @@ import { useModelStore } from '@/hooks/use-model'
 import { Clapperboard } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
-import React from 'react'
+import React, { useEffect } from 'react'
 
 const Actions = () => {
-    const { data: session, status } = useSession()
+    const { data: session, update} = useSession()
     const {onOpen} = useModelStore((state) => state);
     const user = session?.user;
     // const role = user?.role;
 
-    console.log(user, status, "user")
+    useEffect(() => {
+        const handleProfileUpdate = async () => {
+            console.log("Profile update event received, refreshing session");
+            await update();
+        };
+
+        window.addEventListener('profileUpdated', handleProfileUpdate);
+        
+        return () => {
+            window.removeEventListener('profileUpdated', handleProfileUpdate);
+        };
+    }, [update]);
+
+    console.log(user, "user")
   return (
     <div className='flex items-center justify-end gap-x-2 ml-4 lg:ml-0'>
         {!user ? (
@@ -40,12 +53,14 @@ const Actions = () => {
                 className='text-muted-foreground hover:text-primary'
                 asChild
                 > 
-                    <Link href={`/w/${user.name}`}>
+                    <Link href={`/w/${user?.name}`}>
                     <Clapperboard className='h-5 w-5 lg:mr-2'/>
                     <span className='hidden lg:block'>Dashboard</span>
                     </Link>
                 </Button>
-                <UserAvatar imageUrl={user?.image}/>
+                <UserAvatar
+                  key={`${user?.image}-${Date.now()}`}
+                 imageUrl={user?.image}/>
             </div>
         )}
        

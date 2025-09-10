@@ -22,13 +22,15 @@ const BottomBar = ({
   activeObjectRef,
   canvasRef,
   isUser,
+  userplan,
   boardId
 }:BottombarProps) => {
   const isActive = (value: string | Array<ActiveElement>) => 
     (Array.isArray(value) && value.some((val) => val?.value === activeElement?.value))
+  console.log(userplan)
   
   return (
-    <div className="bg-white lg:min-w-4xl lg:ml-12 rounded-lg 
+    <div className="bg-white lg:min-w-4xl lg:ml-20 rounded-lg 
     flex select-none border items-center lg:justify-between gap-4 px-2 md:overflow-x-auto w-full
     scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 whitespace-nowrap">
 
@@ -68,6 +70,7 @@ const BottomBar = ({
         {/* <Separator orientation="vertical" className="h-10" /> */}
         <AddPages
         boardId={boardId}
+        isUser={userplan}
         />  
       <Rightbar 
         elementAttributes={elementAttributes}
@@ -82,6 +85,7 @@ const BottomBar = ({
         <Recording 
         canvasRef={canvasRef}
         boardId={boardId}
+        state={isUser.plan !== "PRO"}
         />
       )}
     </div>

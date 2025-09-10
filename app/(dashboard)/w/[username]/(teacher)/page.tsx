@@ -1,7 +1,5 @@
 import React from 'react'
 
-import Actions from './_component/Actions'
-import { SessionBoardCard } from './_component/session-card'
 import { db } from '@/lib/db'
 import SessionVideo from './_component/session-video'
 import { getSelf } from '@/lib/auth-service'
@@ -28,7 +26,6 @@ const Page = async () => {
 
   return (
     <div className='space-y-12'>
-      <Actions/>
       <SessionVideo
       recentSession={recentSession}
       />

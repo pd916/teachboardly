@@ -25,11 +25,18 @@ export async function POST(req:Request){
          const hashedPassword = await bcrypt.hash(password, 10)
 
           await db.user.create({
-        data: {
+           data: {
             name,
             email,
-            password: hashedPassword
-        },
+            password: hashedPassword,
+            subscription:{
+                create:{
+                    status:"TRIALING",
+                    trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+                }
+            }
+         },
+         
         });
 
         return Response.json(

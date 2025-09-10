@@ -50,7 +50,14 @@ export const authOptions: NextAuthOptions = {
                    
                     const isPasswordCorrect =  await bcrypt.compare(credentials.password, user.password )
                     if(isPasswordCorrect) {
-                        return user
+
+                        const userToReturn = {
+                            id: user.id,
+                            name: user.name,
+                            email: user.email,
+                            imageUrl: user.imageUrl
+                        };
+                        return userToReturn
                     }else {
                         throw new Error("Incorect Password")
                     }
@@ -61,29 +68,39 @@ export const authOptions: NextAuthOptions = {
         })
     ],
     callbacks: {
-        async jwt({ token, user }) {
+        async jwt({ token, user, trigger }) {
             if(user){
                 token._id = user.id?.toString()
                 token.name = user.name
+                token.imageUrl = user.imageUrl
             }
+            if (trigger === "update") {
+                // Fetch fresh user data from database
+                const freshUser = await db.user.findUnique({
+                    where: { id: token._id as string },
+                    select: { 
+                        id: true, 
+                        name: true, 
+                        email: true, 
+                        imageUrl: true 
+                    },
+                });
+
+                if (freshUser) {
+                    token.name = freshUser.name;
+                    token.imageUrl = freshUser.imageUrl;
+                }
+            }
+
           return token
         },
         async session({ session, token }) {
             if (token && session.user) {
             (session.user as { id: string }).id = token._id as string;
             session.user.name = token.name as string;
-            // session.user.image = token.picture as string;
+            session.user.image = token.imageUrl as string;
             
-            // ✅ fetch fresh data from DB
-            // const freshUser = await db.user.findUnique({
-            //     where: { id: token._id as string },
-            //     select: { name: true, imageUrl: true },
-            //     });
-                
-            //     if (freshUser) {
-            //         session.user.name = freshUser.name;
-            //         session.user.image = token.picture as string;
-            // }
+        
         }
         return session;
           },

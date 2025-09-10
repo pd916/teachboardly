@@ -41,9 +41,9 @@ const ProblemSolution = () => {
 
         <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {problems.map((problem, index) => (
-            <div key={index} className="text-center group hover:transform hover:scale-105 transition-all duration-300">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yellow-600 group-hover:bg-red-200 transition-colors duration-300">
-                <problem.icon className="h-8 w-8 text-white" />
+            <div key={index} className="text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yellow-200">
+                <problem.icon className="h-8 w-8 text-yellow-600" />
               </div>
               <h3 className="mt-6 text-lg font-semibold text-gray-900">{problem.title}</h3>
               <p className="mt-2 text-gray-600">{problem.description}</p>

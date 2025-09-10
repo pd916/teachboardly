@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, CheckCircle, Palette, Sparkles, Users, Video } from 'lucide-react'
 
 const Hero = () => {
   const router = useRouter();
@@ -20,7 +19,7 @@ const Hero = () => {
       <div className="relative max-w-6xl mx-auto text-center">
         <div className="relative z-10 md:space-y-0">
           {/* Main Heading */}
-          <h1 className="text-3xl md:text-5xl lg:text-7xl font-black leading-tight">
+          <h1 className="text-3xl h1 md:text-5xl lg:text-5xl font-black leading-tight">
   {/* TEACH LIVE */}
           <span className="relative inline-block">
             <span className="relative z-10">TEACH LIVE.</span>
@@ -57,6 +56,7 @@ const Hero = () => {
           <div className="pt-8 md:pt-0">
             <Button
               size="lg"
+              onClick={handleRedirection}
               className="bg-black hover:bg-gray-800 text-white px-8 py-3 md:px-12 md:py-4 text-sm md:text-base font-semibold rounded-full"
             >
               START FREE

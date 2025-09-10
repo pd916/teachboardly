@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useModelStore } from "@/hooks/use-model"
 import { signOut } from "next-auth/react"
+import Image from "next/image"
 // import LiveBadge from '@/components/live-badge'
 
 const avatarSizes = cva(
@@ -38,8 +39,6 @@ interface UserAvatarProps extends VariantProps<typeof avatarSizes> {
 
 const UserAvatar = ({
     imageUrl,
-    isLive,
-    showBadge
 }:UserAvatarProps) => {
     // const canShowBadge = showBadge && isLive;
     console.log(imageUrl ,"workingsssss")
@@ -49,24 +48,26 @@ const UserAvatar = ({
     <>
     <DropdownMenu >
         <DropdownMenuTrigger>
-      <Avatar
+          {/* <AvatarImage src={imageUrl ?? "https://github.com/shadcn.png"} className='object-cover'/> */}
+      {/* <Avatar
       className='relative'
-      //   className={cn(
-        //     isLive && "ring-2 ring-rose-500 border border-background ",
-        //     // avatarSizes({size})
-        // )}
         >
-        <AvatarImage src={imageUrl || "https://github.com/shadcn.png"} className='object-cover'/>
-        {/* <AvatarFallback>
-            {username[0]}
-            {username[username.length - 1]}
-        </AvatarFallback> */}
-        {/* {canShowBadge && (
-            <div className='absolute -bottom-3 left-1/2 transform -translate-x-1/2'>
-                <LiveBadge/>
-                </div>
-                )} */}
-      </Avatar>
+         <Image
+        src={imageUrl || "https://github.com/shadcn.png"}
+        alt="profile"
+        width={80}
+        height={80}
+        className="rounded-full object-cover"
+      />
+      </Avatar> */}
+
+      <Avatar className="relative">
+      <AvatarImage
+        src={imageUrl || "https://github.com/shadcn.png"}
+        className="object-cover"
+      />
+      <AvatarFallback>U</AvatarFallback>
+    </Avatar>
     </DropdownMenuTrigger>
       <DropdownMenuContent side="bottom" align="end" className="w-48">
     <DropdownMenuLabel>My Account</DropdownMenuLabel>

@@ -11,6 +11,7 @@ interface CreatorLayoutProps {
 
 const CreatorLayout = async ({children, params}:CreatorLayoutProps) => {
      const { username } = await params;
+     console.log(username, "names come")
      const self = await getSelfByUsername(username)
 
     if(!self) {

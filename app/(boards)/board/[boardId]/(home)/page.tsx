@@ -1,7 +1,7 @@
 "use client"
 import {Canvas, Object as FabricObject, } from "fabric";
 import * as fabric from "fabric"
-import React, { startTransition, useCallback, useEffect, useRef, useState } from 'react'
+import React, { startTransition, useCallback, useEffect, useState } from 'react'
 import { ActiveElement, Attributes } from '@/types/type'
 import { defaultNavElement } from '@/constant'
 import Navabr from '@/app/(boards)/_component/board-navbar'
@@ -20,7 +20,6 @@ import {
   initializeFabric} from "@/lib/canvas"
 import { handleDelete } from "@/lib/key-event"
 import { handleImageUpload } from "@/lib/shapes"
-import { useModelStore } from "@/hooks/use-model"
 import { useParams, usePathname, useRouter } from "next/navigation"
 import { useSocket } from "@/components/provider/socket-provider"
 import { useGuestStore } from "@/hooks/use-guest-store"
@@ -28,6 +27,7 @@ import { useSession } from "next-auth/react";
 import { CanvasData, useCanvasStore } from "@/hooks/use-canvas-store";
 import useBoardData from "@/hooks/use-board-data";
 import { deleteBoardOnLeave } from "@/actions/board";
+import { useCurrentUser } from "@/hooks/use-currentUser";
 // import { useFreePlanTimer } from "@/hooks/use-freePlan-Timer";
 
 
@@ -38,7 +38,6 @@ type Guest = {
 };
 
 const Board = () => {
-  const {onOpen} = useModelStore((state) => state);
   const router = useRouter();
   const params = useParams()
   const pathname = usePathname();
@@ -47,20 +46,21 @@ const Board = () => {
   const canvases = useCanvasStore((state) => state.canvases);
   const activeIndex = useCanvasStore((state) => state.activeIndex);
   const addCanvas = useCanvasStore((state) => state.addCanvas);
-  const addHistory = useCanvasStore((state) => state.addHistory);
-  const undo = useCanvasStore((state) => state.undo);
-  const redo = useCanvasStore((state) => state.redo);
+  const {user:userplan} = useCurrentUser()
+  // const addHistory = useCanvasStore((state) => state.addHistory);
+  // const undo = useCanvasStore((state) => state.undo);
+  // const redo = useCanvasStore((state) => state.redo);
   const {data:session} = useSession();
-  // const isApplyingRemoteChangeRef = useRef(false);
   const {socket} = useSocket();
    const [isDrawingEnabled, setIsDrawingEnabled] = useState(false);
    const isUser = session?.user;
    const canvaFabric = canvases[activeIndex];
+   const userPlan = userplan?.subscription[0].status
   //  useFreePlanTimer({
   //   boardId:params?.boardId,
   //   user:isUser
   //  })
-   console.log( currentGuest, session?.user, canvaFabric, activeIndex, canvases, guests, board?.canvasData, "pensss")
+   console.log( canvaFabric?.history, canvaFabric?.historyIndex, userPlan, "pensss")
 
   const [elementAttributes, setElementAttributes] = useState<Attributes>({
     width: '',
@@ -84,6 +84,19 @@ const Board = () => {
     console.log(object, shapeData.objectId, shapeData, "its object")
 
     shapeData.objectId = object.id || object.objectId;
+
+     if (object.clipPath) {
+            try {
+                // Convert clipPath to JSON string to ensure proper transmission
+                const clipPathData = object.clipPath.toJSON ? object.clipPath.toJSON() : object.clipPath;
+                shapeData.clipPath = typeof clipPathData === 'string' ? clipPathData : JSON.stringify(clipPathData);
+                console.log("Syncing object with clipPath:", shapeData.clipPath);
+            } catch (clipError) {
+                console.error("Failed to serialize clipPath:", clipError);
+                // Still sync the object even if clipPath fails
+                delete shapeData.clipPath;
+            }
+        }
 
     socket.emit("update-shape", {
     boardId:params?.boardId ,
@@ -145,9 +158,6 @@ const Board = () => {
       if (currentCanvaFabric){
         currentCanvaFabric.selectedShapeRef.current = elem?.value as string | null;
       }
-
-    // alert(`active: ${activeElement?.value}`)
-    // currentCanvaFabric!.selectedShapeRef!.current = elem?.value as string | null;
   },[setActiveElement]) 
 
   useEffect(() => {
@@ -222,34 +232,22 @@ useEffect(() => {
 
   useEffect(() => {
      const currentCanvasFabric = canvases[activeIndex];
-    // alert(`index: ${canvaFabric?.domRef.current}`)
-    if (!currentCanvasFabric?.domRef?.current) return;
+      const domRefCurrent = currentCanvasFabric?.domRef.current;
+      console.log('Effect running for canvas', currentCanvasFabric?.id, domRefCurrent);
+      if (!domRefCurrent) return;
+  
 
      let canvas: Canvas | null = null;
-     // const canvas = initializeFabric({canvasRef, fabricRef})
+
 
      if (currentCanvasFabric.fabricRef.current) {
-      // Reuse existing fabric canvas
       canvas = currentCanvasFabric.fabricRef.current
     } else {
-      // Initialize new fabric canvas
         canvas = initializeFabric({
           canvasEl: currentCanvasFabric.domRef.current,
           fabricCanva: currentCanvasFabric.fabricRef,
         })
-    }
-
-    //  if (currentCanvasFabric?.domRef?.current) {
-    //    if(!currentCanvasFabric?.fabricRef?.current){
-    //     canvas = initializeFabric({ canvasEl: currentCanvasFabric?.domRef?.current, fabricCanva:currentCanvasFabric?.fabricRef })
-    //   } else {
-    //   canvas = currentCanvasFabric?.fabricRef?.current;
-    // }
-    // } else {
-    //   canvas = currentCanvasFabric?.fabricRef?.current;
-    // }
-
-   
+    }   
 
       console.log(canvas, "coming")
       
@@ -318,66 +316,36 @@ useEffect(() => {
       })
     })
     
-
-//      let snapshotTimeout: ReturnType<typeof setTimeout>;
-//   // const isApplyingRemoteChangeRef = useRef(false); // Use ref instead
-
+// Inside your main hook
+//  let snapshotTimeout: ReturnType<typeof setTimeout>;
+  
 //   const snapshot = () => {
-  //   if (!canvas || !canvaFabric?.id || isApplyingRemoteChangeRef.current) return;
-
-  //   clearTimeout(snapshotTimeout);
-  //   snapshotTimeout = setTimeout(() => {
-    //     const canvasState = JSON.stringify(canvas.toJSON());
-    //     socket.emit("sync-history", {
+//     if (!canvas || !currentCanvasFabric?.id) return;
+//     if (isApplyingRemoteChangeRef.current) return;
+    
+//     clearTimeout(snapshotTimeout);
+    
+//     snapshotTimeout = setTimeout(() => {
+//       const canvasState = JSON.stringify(canvas.toJSON());
+//       const currentHistory = currentCanvasFabric.history[currentCanvasFabric.historyIndex];
+      
+//       if (currentHistory !== canvasState) {
+//         // addHistory(currentCanvasFabric.id, canvasState);
+//         socket.emit("sync-history", {
 //       boardId: params?.boardId,
-//       canvasId: canvaFabric.id,
+//       canvasId: currentCanvasFabric.id,
 //       canvasState
 //     });
-//   }, 200);
-// };
+//       }
+//     }, 200);
+//   };
 
-//   if (canvas && canvas.getObjects().length > 0) {
-//   const canvasState = JSON.stringify(canvas.toJSON());
-//   socket.emit("add-history", {
-//     boardId: params?.boardId,
-//     canvasId: canvaFabric.id,
-//     canvasState
-//   });
-// }
+//   // Add history event listeners
+//   canvas.on('object:added', snapshot);
+//   canvas.on('object:removed', snapshot);
+//   canvas.on('object:modified', snapshot);
+//   canvas.on('path:created', snapshot);
 
-
-//   canvas?.on('object:added', snapshot);
-//   canvas?.on('object:removed', snapshot);
-//   canvas?.on('path:created', snapshot);
-
-
-  //   let snapshotTimeout:ReturnType<typeof setTimeout>;
-  //   let isApplyingRemoteChange = false;
-  // const snapshot = () => {
-  //   if (!canvas || !canvaFabric?.id || isApplyingRemoteChange) return;
-    
-  //   clearTimeout(snapshotTimeout);
-  //   snapshotTimeout = setTimeout(() => {
-  //     const canvasState = JSON.stringify(canvas.toJSON());
-  //     addHistory(canvaFabric.id, JSON.stringify(canvas.toJSON()));
-
-  //     socket.emit("sync-history", {
-  //     boardId: params?.boardId,
-  //     canvasId: canvaFabric.id,
-  //     canvasState
-  //   });
-  //   }, 200); // Wait for shape to fully complete
-  // };
-
-  // // ✅ Save initial state ONLY if canvas has existing objects
-  // if (canvas && canvas.getObjects().length > 0) {
-  //   addHistory(canvaFabric.id, JSON.stringify(canvas.toJSON()));
-  // }
-
-  // // ✅ ONLY listen to object completion events
-  // canvas?.on('object:added', snapshot);
-  // canvas?.on('object:removed', snapshot);
-  // canvas?.on('path:created', snapshot);
   
   const resizeHandler = () => {
     handleResize({canvasEl: currentCanvasFabric?.domRef?.current, canvas })
@@ -389,7 +357,8 @@ useEffect(() => {
     canvas?.off();
     window.removeEventListener("resize", resizeHandler );
   }
-  },[activeIndex, canvases, canvases[activeIndex]?.domRef?.current])
+  },[activeIndex, canvases])
+
 
   useEffect(() => {
     if(!board?.canvasData || !canvaFabric?.fabricRef?.current) return;
@@ -408,79 +377,39 @@ useEffect(() => {
     
   }, [board?.canvasData, canvaFabric]);
 
-  // Add this at the top of your component (outside useEffect)
-
-// Complete Socket Hook
+ 
+// FIXED: Socket hook handles both admin and participants
 // useEffect(() => {
 //   if (!socket) return;
 
-//   const canvas = canvases[activeIndex]
-  
-//   socket.on("canvas-undo", ({ canvasId }: {canvasId: string}) => {
-//     if (canvasId !== canvaFabric?.id) return;
-//     undo(canvasId)
-//     // const canvasObj = canvaFabric?.fabricRef?.current;
-//     // if (!canvasObj) return;
-
-//     // addHistory(canvasId, canvasState);
-//     // isApplyingRemoteChangeRef.current = true; // Set shared flag
-//     // canvasObj.loadFromJSON(canvasState, () => {
-//     //   canvasObj.renderAll();
-//     //   canvasObj.requestRenderAll();
-      
-//     //   setTimeout(() => {
-//     //     isApplyingRemoteChangeRef.current = false; // Reset shared flag
-//     //   }, 100);
-//     // });
-//   });
-
-//   socket.on("canvas-redo", ({ canvasId}: {canvasId: string}) => {
-//     if (canvasId !== canvaFabric?.id) return;
-//     redo(canvasId)
-
-//     // const canvasObj = canvaFabric?.fabricRef?.current;
-//     // if (!canvasObj) return;
-
-//     // addHistory(canvasId, canvasState);
-//     // isApplyingRemoteChangeRef.current = true; // Set shared flag
-//     // canvasObj.loadFromJSON(canvasState, () => {
-//     //   canvasObj.renderAll();
-//     //   canvasObj.requestRenderAll();
-      
-//     //   setTimeout(() => {
-//     //     isApplyingRemoteChangeRef.current = false; // Reset shared flag
-//     //   }, 100);
-//     // });
-//   });
-
-//   socket.on("sync-history", ({ canvasId, canvasState }: {canvasId: string, canvasState: string}) => {
-//     console.log("[REMOTE-SYNC] Received for:", canvasId, "len:", canvasState.length);
-//     if (canvasId !== canvaFabric?.id) return;
-    
-//     const canvasObj = canvas?.fabricRef?.current;
-//     if (!canvasObj) return;
-
-//     // Add to history for sync-history only
+//   const handleSyncHistory = ({canvasId, canvasState}:{canvasId:string, canvasState:string}) => {
+//     alert(`canvadID: ${canvasId} ${canvasState}`)
 //     addHistory(canvasId, canvasState);
+    
+//   }
 
-//     isApplyingRemoteChangeRef.current = true; // Set shared flag
-//     canvasObj.loadFromJSON(canvasState, () => {
-//       console.log("[REMOTE-SYNC] Applied");
-//       canvasObj.renderAll();
-//       canvasObj.requestRenderAll();
-      
-//       setTimeout(() => {
-//         isApplyingRemoteChangeRef.current = false; // Reset shared flag
-//       }, 100);
-//     });
-//   });
+//   const handleUndoRemote = ({canvasId}:{canvasId:string}) => {
+//     console.log("Received undo for canvas:", canvasId);
+//     alert(canvasId)
+//     undo(canvasId, true);
+//   }
+
+//   const handleRedoRemote = ({canvasId}:{canvasId:string}) => {
+//     console.log("Received redo for canvas:", canvasId);
+//     alert(canvasId)
+//     redo(canvasId, true);
+//   }
+
+//   socket.on("history-synched", handleSyncHistory);
+//   socket.on("undo-canva", handleUndoRemote);
+//   socket.on("redo-canva", handleRedoRemote);
 
 //   return () => {
-//     socket.off("canvas-undo");
-//     socket.off("canvas-redo");
-//     socket.off("sync-history");
-//   };
-// }, [socket, canvaFabric, addHistory]);
+//     socket.off("history-synched", handleSyncHistory);
+//     socket.off("undo-canva", handleUndoRemote);
+//     socket.off("redo-canva", handleRedoRemote);
+//   }
+// }, [socket]);
 
 
   useEffect(() => {
@@ -588,105 +517,169 @@ useEffect(() => {
   };
 }, [socket]);
 
-  useEffect(() => {
+useEffect(() => {
     if (!socket) return;
-    
-    const handleShapeUpdate = (shape: any) => {
-         const { canvases, activeIndex } = useCanvasStore.getState(); // always fresh
 
-         if (!shape.objectId) {
-        console.error("Invalid shape data:", shape);
-        return;
-        // alert(shape.objectId)
-      }
-        console.log(shape, "shape")
+    const handleShapeUpdate = (shape: any) => {
+        const { canvases, activeIndex } = useCanvasStore.getState();
+
+        if (!shape.objectId) {
+            console.error("Invalid shape data:", shape);
+            return;
+        }
 
         const currentCanvaFabric = canvases[activeIndex];
-
         const canvas = currentCanvaFabric?.fabricRef?.current;
-       if (!canvas) return;
+        if (!canvas) return;
 
-            const existing = canvas.getObjects().find((obj: any) => 
-              String(obj.objectId) === String(shape.objectId));
+        const existing = canvas.getObjects().find(
+            (obj: any) => String(obj.objectId) === String(shape.objectId)
+        );
 
         // Update existing object's properties
         if (existing) {
-          // existing.set({ ...shape });
-          const { type, clipPath, ...propsToSet } = shape;
-          if (type.toLowerCase() === 'line') {
-    existing.set({
-      x1: propsToSet.x1,
-      y1: propsToSet.y1,
-      x2: propsToSet.x2,
-      y2: propsToSet.y2,
-       left: propsToSet.left,
-      top: propsToSet.top,
-      scaleX: propsToSet.scaleX,
-      scaleY: propsToSet.scaleY,
-      angle: propsToSet.angle,
-      originX: propsToSet.originX,
-      originY: propsToSet.originY,
-      flipX: propsToSet.flipX,
-      flipY: propsToSet.flipY,
-      skewX: propsToSet.skewX,
-      skewY: propsToSet.skewY,
+            const { type, clipPath, ...propsToSet } = shape;
 
-      // stroke
-      stroke: propsToSet.stroke,
-      strokeWidth: propsToSet.strokeWidth,
-      strokeUniform: propsToSet.strokeUniform,
-    });
-          } else {
-            existing.set(propsToSet);
-          }
-          // alert(`type: ${type} props:${propsToSet}`)
-          // existing.set(propsToSet)
-          existing.setCoords();
-          canvas.renderAll();
-          console.log(`Updated existing shape on canvas`, shape);
-          return;
-        } 
+            // Update object properties first
+            if (type && type.toLowerCase() === "line") {
+                existing.set({
+                    x1: propsToSet.x1,
+                    y1: propsToSet.y1,
+                    x2: propsToSet.x2,
+                    y2: propsToSet.y2,
+                    left: propsToSet.left,
+                    top: propsToSet.top,
+                    scaleX: propsToSet.scaleX,
+                    scaleY: propsToSet.scaleY,
+                    angle: propsToSet.angle,
+                    originX: propsToSet.originX,
+                    originY: propsToSet.originY,
+                    flipX: propsToSet.flipX,
+                    flipY: propsToSet.flipY,
+                    skewX: propsToSet.skewX,
+                    skewY: propsToSet.skewY,
+                    stroke: propsToSet.stroke,
+                    strokeWidth: propsToSet.strokeWidth,
+                    strokeUniform: propsToSet.strokeUniform,
+                });
+            } else {
+                existing.set(propsToSet);
+            }
+
+            // FIXED: Exact clipPath position reconstruction
+            if (clipPath) {
+                try {
+                    let parsedClipPath = typeof clipPath === 'string' ? JSON.parse(clipPath) : clipPath;
+                    
+                    if (parsedClipPath.type === 'Group' && parsedClipPath.objects) {
+                        // FIXED: Recreate holes with exact same positioning
+                        const circles = parsedClipPath.objects.map((obj: any) => {
+                            return new fabric.Circle({
+                                left: obj.left,    // Use exact position from admin
+                                top: obj.top,      // Use exact position from admin
+                                radius: obj.radius || 24,
+                                originX: 'center',
+                                originY: 'center',
+                                fill: 'rgba(0,0,0,1)',
+                                absolutePositioned: false,
+                                selectable: false,
+                                evented: false
+                            });
+                        });
+                        
+                        const clipGroup = new fabric.Group(circles, {
+                            inverted: true,
+                            absolutePositioned: false,
+                            // FIXED: Preserve group positioning
+                            left: parsedClipPath.left || 0,
+                            top: parsedClipPath.top || 0,
+                            originX: parsedClipPath.originX || 'left',
+                            originY: parsedClipPath.originY || 'top'
+                        });
+                        
+                        existing.clipPath = clipGroup;
+                        console.log("✅ Exact clipPath applied with preserved positions");
+                    } else {
+                        // Handle other shape types as clipPath
+                        fabric.util.enlivenObjects([parsedClipPath])
+                            .then((objects) => {
+                                if (objects[0]) {
+                                    const clipObject = objects[0] as fabric.Object;
+                                    clipObject.set({
+                                        inverted: true,
+                                        absolutePositioned: false,
+                                        selectable: false,
+                                        evented: false
+                                    });
+                                    existing.clipPath = clipObject;
+                                }
+                            });
+                    }
+                    
+                    existing.set('dirty', true);
+                    canvas.requestRenderAll();
+                    
+                } catch (error) {
+                    console.error("❌ Failed to apply clipPath:", error);
+                }
+            }
+
+            existing.setCoords();
+            canvas.requestRenderAll();
+            console.log(`✅ Updated existing shape with exact eraser positions`, shape.objectId);
+            return;
+        }
+
+        // Handle new objects (unchanged)
+        let processedShape = { ...shape };
 
         if (shape.clipPath) {
-       if (shape.clipPath.objects && shape.clipPath.objects.length) {
-        shape.clipPath.objects.forEach((clipObj: any) => {
-          clipObj.id = shape.objectId;
-          clipObj.objectId = shape.objectId;
-        });
-      }
-      }
+            try {
+                if (typeof shape.clipPath === 'string') {
+                    processedShape.clipPath = JSON.parse(shape.clipPath);
+                }
+                if (processedShape.clipPath.objects && processedShape.clipPath.objects.length) {
+                    processedShape.clipPath.objects.forEach((clipObj: any, index: number) => {
+                        clipObj.id = `${shape.objectId}_clip_${index}`;
+                        clipObj.objectId = `${shape.objectId}_clip_${index}`;
+                    });
+                }
+            } catch (error) {
+                console.error("❌ Failed to process clipPath for new object:", error);
+                delete processedShape.clipPath;
+            }
+        }
 
-        fabric.util.enlivenObjects([shape])
-          .then((objects) => {
-            const canvasObjects = objects.filter(
-              (obj): obj is fabric.FabricObject => obj instanceof fabric.Object
-            );
+        fabric.util
+            .enlivenObjects([processedShape])
+            .then((objects) => {
+                const canvasObjects = objects.filter(
+                    (obj): obj is fabric.FabricObject => obj instanceof fabric.Object
+                );
 
-            // alert(`Number of objects created: ${canvasObjects.length}`);
-            console.log("Enlivened objects:", canvasObjects);
+                canvasObjects.forEach((obj) => {
+                    // @ts-expect-error
+                    obj.id = shape.objectId;
+                    // @ts-expect-error
+                    obj.objectId = shape.objectId;
+                    canvas.add(obj);
+                });
 
-            canvasObjects.forEach((obj) => {
-              // @ts-expect-error
-              obj.id = shape.objectId;
-              // @ts-expect-error
-              obj.objectId = shape.objectId;
-              canvas.add(obj);
+                canvas.requestRenderAll();
+                console.log("✅ Added new shape with exact clipPath positions", shape.objectId);
+            })
+            .catch((err) => {
+                console.error("❌ Failed to enliven new object:", err);
             });
+    };
 
-        canvas.renderAll();
-        console.log("Added new shape to canvas", shape);
-      })
-      .catch((err) => {
-        console.error("Failed to enliven objects:", err);
-      });
-          }
-
-       socket.on("shape-updated", handleShapeUpdate);
+    socket.on("shape-updated", handleShapeUpdate);
 
     return () => {
-    socket.off("shape-updated", handleShapeUpdate);
-  };
-  },[socket, activeIndex])
+        socket.off("shape-updated", handleShapeUpdate);
+    };
+}, [socket, activeIndex]);
+
 
   useEffect(() => {
       if(!socket) return;
@@ -722,34 +715,6 @@ useEffect(() => {
         socket.off("shape-removed");
       };
   },[socket])
-
- useEffect(() => {
-  if (!socket) return;
-
-  // ADD THIS:
-  const handleSyncHistory = ({canvasId, canvasState}:{canvasId:string, canvasState:string}) => {
-    addHistory(canvasId, canvasState);
-  }
-
-  const handleUndoRemote = ({canvasId}:{canvasId:string}) => {
-    undo(canvasId);
-  }
-  
-  const handleRedoRemote = ({canvasId}:{canvasId:string}) => {
-    redo(canvasId);
-  }
-
-  socket.on("sync-history", handleSyncHistory); // ADD
-  socket.on("canvas-undo", handleUndoRemote);
-  socket.on("canvas-redo", handleRedoRemote);
-
-  return () => {
-    socket.off("sync-history", handleSyncHistory); // ADD
-    socket.off("canvas-undo", handleUndoRemote);
-    socket.off("canvas-redo", handleRedoRemote);
-  }
-}, [socket]);
-
 
   useEffect(() => {
   if (!socket) return;
@@ -809,7 +774,6 @@ useEffect(() => {
 },[socket])
 
 
-
 useEffect(() => {
   if(!socket) return;
 
@@ -839,8 +803,7 @@ useEffect(() => {
         <main className="flex-1 bg-gray-50 pl-18 overflow-hidden">
         <Live 
         canvases={canvases}
-        // activeIndex={activeIndex}
-        // canvaFabric={canvaFabric}
+        isUser={!!isUser}
         isDrawingEnabled={isDrawingEnabled}
         />
         </main>
@@ -849,7 +812,8 @@ useEffect(() => {
         {(isUser || isDrawingEnabled) && (
           <BottomBar
           activeElement={activeElement}
-          isUser={!!isUser}
+          isUser={isUser}
+          userplan={userPlan!}
           handleActiveElement={handleActiveElement}
           imageInputRef={canvaFabric?.imageInputRef}
           elementAttributes={elementAttributes}

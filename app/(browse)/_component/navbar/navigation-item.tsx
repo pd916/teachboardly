@@ -17,7 +17,7 @@ const NavigationItem = ({
   return (
     <Link href={href}>
        <div className={cn(
-         'flex items-center gap-x-4 hover:text-[#5de68b] transition ease-in-out',
+         'flex items-center gap-x-4 hover:text-[#1ba047] transition ease-in-out',
          isActive && "font-extrabold"
         )}>
             <span>

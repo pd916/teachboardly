@@ -172,10 +172,6 @@ export const sidebarIcons = [
     icon: <Bot/>
   },
   {
-    label: "Chat",
-    icon: <MessageCircle/>
-  },
-  {
     label: "InviteCode",
     icon: <Link/>
   },

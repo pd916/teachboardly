@@ -32,16 +32,16 @@ export default async function handler(req: NextApiRequest, res:NextApiResponseSe
         }
     });
 
-    console.log(existingBoard, value.link, "member-joiningg")
-
+    
     if (!existingBoard) {
-    return res.status(404).json({ error: "Board not found" });
-  }
-  
-  const ownerPlan= existingBoard.user.subscription?.[0]
+      return res.status(404).json({ error: "Board not found" });
+    }
+    
+    const ownerPlan = existingBoard.user.subscription?.[0]
+    console.log(existingBoard, ownerPlan, value.link, "member-joiningg")
 
   
-  if(ownerPlan.status === "TRIALING" && members.length >= 8){
+  if(ownerPlan.status === "TRIALING" && members.length >= 5){
     return res.status(404).json({ error: "Sorry you can't join the board host didn't upgraded to pro plan" });
   }
 

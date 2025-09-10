@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Seymour_One  } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "@/context/auth-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ModalProvider } from "@/components/ModelProvider";
 import { SocketProvider } from "@/components/provider/socket-provider";
-import Script from "next/script";
-import DesmosScript from "@/components/desmos-script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,6 +14,12 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const seymour = Seymour_One({
+  weight: "400", // only available weight
+  subsets: ["latin"],
+  variable: "--font-seymour-one",
 });
 
 export const metadata: Metadata = {
@@ -34,7 +38,7 @@ export default function RootLayout({
         <script src="https://www.desmos.com/api/v1.10/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${seymour.variable} antialiased`}
         >
           {/* <DesmosScript/> */}
       <AuthProvider>

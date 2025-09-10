@@ -113,18 +113,21 @@ const ioHandler = (req:NextApiRequest, res: NextApiResponseServerIo) => {
                 
 
                 socket.on("sync-history", ({ boardId, canvasId, canvasState }) => {
-                io.to(boardId).emit("sync-history", { canvasId, canvasState });
-                // socket.broadcast.to(board).emit("member-joined", { newMember: profile });
-                });
-
-                // ✅ CHANGED: Use socket.to instead of io.to
-                socket.on("canvas-undo", ({ boardId, canvasId}) => {
-                io.to(boardId).emit("canvas-undo", { canvasId}); // ✅ CHANGED: Only to others
-                });
-
-                // ✅ CHANGED: Use socket.to instead of io.to
-                socket.on("canvas-redo", ({ boardId, canvasId }) => {
-                io.to(boardId).emit("canvas-redo", { canvasId }); // ✅ CHANGED: Only to others
+                // io.to(boardId).emit("history-synched", { canvasId, canvasState });
+                
+                socket.broadcast.to(boardId).emit("history-synched", { canvasId, canvasState });
+            });
+            
+            // ✅ CHANGED: Use socket.to instead of io.to
+            socket.on("canvas-undo", ({ boardId, canvasId}) => {
+                // io.to(boardId).emit("undo-canva", { canvasId}); // ✅ CHANGED: Only to others
+                socket.broadcast.to(boardId).emit("undo-canva", { canvasId});
+            });
+            
+            // ✅ CHANGED: Use socket.to instead of io.to
+            socket.on("canvas-redo", ({ boardId, canvasId }) => {
+                // io.to(boardId).emit("redo-canva", { canvasId }); // ✅ CHANGED: Only to others
+                socket.broadcast.to(boardId).emit("redo-canva", { canvasId });
                 });
 
 

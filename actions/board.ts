@@ -12,10 +12,23 @@ const MAX_FREE_BOARDS = 8;
 export const createBoard = async (values: Partial<Board>) => {
     const self = await getSelf()
 
-
     if(!self){
         redirect("/sign-in");
     }
+
+    const userSubscriptionStatus = self.subscription?.[0]
+
+    if(userSubscriptionStatus.status === "TRIALING") {
+    const now = new Date();
+    if (new Date(userSubscriptionStatus.trialEndsAt) < now) {
+        // Trial expired
+        await db.subscription.update({
+            where: { id: userSubscriptionStatus.id },
+            data: { status: "EXPIRED" },
+        });
+        redirect("/");
+    }
+}
 
     //  const boardCount = await getBoardCountByUser(self?.id!);
 

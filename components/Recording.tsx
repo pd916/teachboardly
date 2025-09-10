@@ -8,9 +8,10 @@ import { toast } from 'sonner';
 type RecordingProps = {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   boardId?: string | string[] | undefined;
+  state: boolean;
 };
 
-const Recording = ({canvasRef, boardId}:RecordingProps) => {
+const Recording = ({canvasRef, boardId, state}:RecordingProps) => {
     const [recording, setRecording] = useState(false);
     const [isPending, startTransition] = useTransition();
     const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
@@ -19,7 +20,6 @@ const Recording = ({canvasRef, boardId}:RecordingProps) => {
 
   const startRecording = async () => {
     if (!canvasRef.current) {
-      alert("Canvas not available");
       return;
     }
 
@@ -106,6 +106,7 @@ const Recording = ({canvasRef, boardId}:RecordingProps) => {
   return (
     <Button 
     variant="outline" 
+    disabled={state}
     size="sm" 
     aria-label={recording ? "Stop recording" : "Start recording"}
     onClick={toggleRecording}>

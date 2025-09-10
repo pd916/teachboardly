@@ -18,7 +18,7 @@ const BoardSidebar = ({board}:BoardItemProps) => {
   console.log(board, "board")
     const {onOpen} = useModelStore((state) => state);
   return (
-    <div className="w-18 border bg-white text-black min-h-screen z-10 fixed p-4">
+    <div className="w-18 lg:border bg-white text-black min-h-screen fixed p-4">
       {sidebarIcons?.map((item) => (
         <div key={item.label} className='pt-4'>
        <Hint label={item.label} side='right' asChild>

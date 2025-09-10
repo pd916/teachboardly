@@ -22,10 +22,8 @@ const Rightbar = ({
   syncShapeInStorage,
   boardId
 }:RightSidebarProps) => {
-   const {socket} = useSocket();
-  const panStateRef = useRef({ enabled: false, dragging: false, lastX: 0, lastY: 0 });
-  const { canvases, activeIndex, undo, redo, getCanvasState } = useCanvasStore((state) => state);
-  const activeCanvas = canvases[activeIndex];
+
+  
 const panHandlersRef = useRef<{
   down?: (opt: TEvent<MouseEvent>) => void;
   move?: (opt: TEvent<MouseEvent>) => void;
@@ -130,49 +128,33 @@ const togglePan = () => {
 };
 
 // ✅ CHANGED: Complete rewrite of handleUndo
-const handleUndo = () => {
-  if (!activeCanvas) return;
+// const handleUndo = () => {
+//   if (!activeCanvas) return;
+//   if (activeCanvas.historyIndex <= 0) return; // Check if undo is possible
   
-  // const canvasState = getCanvasState(activeCanvas.id, 'undo'); // ✅ NEW: Get state first
-  // if (!canvasState) return; // ✅ NEW: Check if undo available
-  
-  // undo(activeCanvas.id); // ✅ CHANGED: No longer expecting return value
-  
-  socket.emit("canvas-undo", {
-    boardId,
-    canvasId: activeCanvas.id,
-  });
-};
+//   // undo(activeCanvas.id);
+//   socket.emit("canvas-undo", {
+//       boardId,
+//       canvasId: activeCanvas.id
+//     });
+// };
 
-// ✅ CHANGED: Complete rewrite of handleRedo
-const handleRedo = () => {
-  if (!activeCanvas) return;
-
+// const handleRedo = () => {
+//   if (!activeCanvas) return;
+//   if (activeCanvas.historyIndex >= activeCanvas.history.length - 1) return; // Check if redo is possible
   
-  socket.emit("canvas-redo", {
-    boardId,
-    canvasId: activeCanvas.id,
-  });
-  // ✅ REMOVED: setTimeout and fabricRef logic
-};
+//   // redo(activeCanvas.id);
+//    socket.emit("canvas-redo", {
+//       boardId,
+//       canvasId: activeCanvas.id
+//     });
+// };
 
 
 
   return (
     <div className='flex items-center gap-2'>
        <div className="flex items-center gap-2">
-        <BottombarButton
-        variant="ghost"
-        onClick={handleUndo }
-        label='Undo'
-        icon={Undo}
-        />
-        <BottombarButton
-        variant="ghost"
-        onClick={handleRedo}
-        label='Redo'
-        icon={Redo}
-        />
         <BottombarButton
         variant="ghost"
         onClick={zoomOut}

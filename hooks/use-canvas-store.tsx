@@ -2,6 +2,8 @@ import { Canvas, FabricObject } from 'fabric';
 import React from 'react';
 import { create } from 'zustand';
 
+export const isApplyingRemoteChangeRef = { current: false };
+
 export type CanvasData = {
   id: string;
   domRef: React.RefObject<HTMLCanvasElement | null>;
@@ -20,13 +22,11 @@ type CanvasStore = {
   canvases: CanvasData[];
   activeIndex: number;
   addCanvas: (canva: CanvasData) => void;
-//  updateFabricRef: (id: string, fabricCanvas: Canvas) => void;
   next: () => void;
   prev: () => void;
-  addHistory: (id: string, json: string) => void;
-  getCanvasState: (id: string, direction: 'undo' | 'redo') => string | null;
-  undo: (id: string) => void;
-  redo: (id: string) => void;
+  // addHistory: (id: string, json: string) => void;
+  // undo: (id: string, isRemote?: boolean) => void;
+  // redo: (id: string, isRemote?: boolean) => void;
 
 };
 
@@ -43,11 +43,6 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         };
       });
     },
-  //   updateFabricRef: (id, fabricCanvas) => set((state) => ({
-  //   canvases: state.canvases.map(c => 
-  //     c.id === id ? { ...c, fabricRef: { current: fabricCanvas } } : c
-  //   )
-  // })),
   next: () => {
     const { activeIndex, canvases } = get();
     if (activeIndex < canvases.length - 1) {
@@ -62,94 +57,8 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
 
 // Keep addHistory exactly the same
 
-// ✅ ADD: New helper function
-getCanvasState: (id: string, direction: 'undo' | 'redo'): string | null => {
-  const state = get();
-  const canvas = state.canvases.find(c => c.id === id);
-  if (!canvas) return null;
-  
-  if (direction === 'undo' && canvas.historyIndex > 0) {
-    return canvas.history[canvas.historyIndex - 1];
-  }
-  if (direction === 'redo' && canvas.historyIndex < canvas.history.length - 1) {
-    return canvas.history[canvas.historyIndex + 1];
-  }
-  return null;
-},
 
-addHistory: (id, json) => {
-  set((state) => {
-    const canvases = state.canvases.map((c) => {
-      if (c.id !== id) return c;
-
-      // Skip if identical to current history entry
-      if (c?.history[c?.historyIndex] === json) return c;
-
-      const trimmedHistory = c.history.slice(0, c.historyIndex + 1);
-      trimmedHistory.push(json);
-
-      if (trimmedHistory.length > 50) trimmedHistory.shift();
-      return {
-        ...c,
-        history: trimmedHistory,
-        historyIndex: trimmedHistory.length - 1,
-      };
-    });
-    return { canvases };
-  });
-},
-
-// ✅ UNCHANGED: Keep your existing undo function
-undo: (id) => {
-  set((state) => {
-    const canvases = state.canvases.map((c) => {
-      if (c.id !== id) return c;
-      if (c?.historyIndex <= 0) return c;
-
-      const newIndex = c.historyIndex - 1;
-      const canvas = c.fabricRef?.current;
-      if (canvas) {
-        canvas.clear();
-        canvas.loadFromJSON(c.history[newIndex], () => {
-          canvas.renderAll();
-          canvas.requestRenderAll();
-          setTimeout(() => {
-            canvas.renderAll();
-          }, 50);
-        });
-      }
-
-      return { ...c, historyIndex: newIndex };
-    });
-    return { canvases };
-  });
-},
-
-// ✅ UNCHANGED: Keep your existing redo function
-redo: (id) => {
-  set((state) => {
-    const canvases = state.canvases.map((c) => {
-      if (c.id !== id) return c;
-      if (c.historyIndex >= c.history.length - 1) return c;
-
-      const newIndex = c.historyIndex + 1;
-      const canvas = c.fabricRef?.current;
-      if (canvas) {
-        canvas.clear();
-        canvas.loadFromJSON(c.history[newIndex], () => {
-          canvas.renderAll();
-          canvas.requestRenderAll();
-          setTimeout(() => {
-            canvas.renderAll();
-          }, 50);
-        });
-      }
-
-      return { ...c, historyIndex: newIndex };
-    });
-    return { canvases };
-  });
-},
+      
 
 // Keep addHistory exactly the same
 // addHistory: (id, json) => {

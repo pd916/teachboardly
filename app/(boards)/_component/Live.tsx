@@ -5,12 +5,11 @@ import { CanvasLayer } from './canva-layers';
 
 type Props = {
   canvases: CanvasData[]
-  // canvaFabric: CanvasData
-  //   activeIndex: number;
     isDrawingEnabled:boolean
+    isUser: boolean
 }
 
-const Live = ({isDrawingEnabled}:Props) => {
+const Live = ({isDrawingEnabled, isUser}:Props) => {
    const canvases = useCanvasStore((state) => state.canvases);
   const activeIndex = useCanvasStore((state) => state.activeIndex);
 
@@ -19,8 +18,10 @@ const Live = ({isDrawingEnabled}:Props) => {
 if (canvases?.length === 0) return null;
 console.log('Canvas IDs:', canvases.map(c => c.id));
 
+
   return (
     <div className="relative w-full h-full border border-amber-400">
+
       {canvases?.map((canvas, index) => (
         <CanvasLayer
         key={canvas?.id}
@@ -28,6 +29,7 @@ console.log('Canvas IDs:', canvases.map(c => c.id));
           fabricRef={canvas?.fabricRef}
           isActive={index === activeIndex}
           isDrawingEnabled={isDrawingEnabled}
+          isUser={isUser}
         />
       ))}
     </div>

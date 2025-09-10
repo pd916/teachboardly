@@ -1,4 +1,5 @@
 import { CanvasData } from "@/hooks/use-canvas-store";
+import { Subscription, User } from "@prisma/client";
 import {TEvent, Canvas,  FabricObject, TPointerEvent, Path } from "fabric";
 
 
@@ -8,10 +9,20 @@ export type ActiveElement = {
   icon: string;
 } | null;
 
+export type LiteUser = {
+  id: string
+  name: string
+  email: string
+  image?: string | null
+  plan: string
+}
+
+
 export type BottombarProps = {
   activeElement: ActiveElement;
   imageInputRef?: React.MutableRefObject<HTMLInputElement | null>;
-  isUser: boolean;
+  isUser?: LiteUser;
+  userplan?: "TRIALING" | "ACTIVE" | "EXPIRED" | "CANCELED";
   handleImageUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleActiveElement?: (element: ActiveElement) => void;
   elementAttributes: Attributes;

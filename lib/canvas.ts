@@ -65,7 +65,7 @@ export const handleCanvasMouseDown = ({
     const pointer = canvas.getPointer(options.e);
     const target = canvas.findTarget(options.e);
 
-     if (selectedShapeRef.current === 'eraser') {
+      if (selectedShapeRef.current === 'eraser') {
         isDrawing.current = true;
         canvas.selection = false;
         
@@ -85,65 +85,63 @@ export const handleCanvasMouseDown = ({
                 evented: false,
             });
 
-        // Create hole circle that moves with object
+        // FIXED: Store absolute position for exact sync
         const makeHoleCircle = (p: fabric.Point, obj: fabric.Object) => {
-            const objCenter = obj.getCenterPoint();
-            const relativeX = p.x - objCenter.x;
-            const relativeY = p.y - objCenter.y;
-            
+            // Store the absolute canvas position for exact sync
             return new fabric.Circle({
-                left: relativeX,
-                top: relativeY,
+                left: p.x,  // Use absolute position
+                top: p.y,   // Use absolute position
                 originX: 'center',
                 originY: 'center',
                 radius: eraserRadius,
-                absolutePositioned: false,
+                absolutePositioned: false, // Will be converted to relative when applied
                 selectable: false,
                 evented: false,
-                fill: 'rgba(0,0,0,1)'
+                fill: 'rgba(0,0,0,1)',
+                // Store original absolute position for sync
+                _absoluteLeft: p.x,
+                _absoluteTop: p.y
             });
         };
 
-        // Add hole to object using clipPath
+        // FIXED: Convert absolute to relative position when applying to object
         function addHoleToObject(obj: fabric.Object, p: fabric.Point) {
-      const hole = makeHoleCircle(p, obj);
+            const objCenter = obj.getCenterPoint();
+            const hole = makeHoleCircle(p, obj);
+            
+            // Convert absolute position to relative position
+            hole.left = p.x - objCenter.x;
+            hole.top = p.y - objCenter.y;
 
-      if (!obj.clipPath) {
-          const group = new fabric.Group([hole], { 
-              inverted: true,
-              absolutePositioned: false
-          });
-          obj.clipPath = group;
-      } else {
-          const clip = obj.clipPath as fabric.Group;
-          if (clip.type !== 'group') {
-              const group = new fabric.Group([clip, hole], { 
-                  inverted: true,
-                  absolutePositioned: false
-              });
-              obj.clipPath = group;
-          } else {
-              clip.add(hole);
-              clip.inverted = true;
-              clip.absolutePositioned = false;
-          }
-      }
+            if (!obj.clipPath) {
+                const group = new fabric.Group([hole], { 
+                    inverted: true,
+                    absolutePositioned: false
+                });
+                obj.clipPath = group;
+            } else {
+                const clip = obj.clipPath as fabric.Group;
+                if (clip.type !== 'group') {
+                    const group = new fabric.Group([clip, hole], { 
+                        inverted: true,
+                        absolutePositioned: false
+                    });
+                    obj.clipPath = group;
+                } else {
+                    clip.add(hole);
+                    clip.inverted = true;
+                    clip.absolutePositioned = false;
+                }
+            }
 
-      obj.set('dirty', true);
-      canvas.requestRenderAll();
-      
-      // SIMPLE FIX: Don't sync objects with clipPath to avoid the error
-      // Only sync if object doesn't have clipPath (i.e., first erase)
-      syncShapeInStorage(obj);
-      // if (!obj.clipPath || (obj.clipPath as fabric.Group).getObjects().length === 1) {
-      //     try {
-      //     } catch (error) {
-      //         console.log("Skipping sync for erased object to avoid transform error");
-      //     }
-      // }
-         }
+            obj.set('dirty', true);
+            canvas.requestRenderAll();
+            
+            // Sync the updated object
+            syncShapeInStorage(obj);
+        }
 
-        // Erase at pointer position
+        // Erase at pointer position (unchanged)
         function eraseAtPointer(p: fabric.Point) {
             const objects = canvas.getObjects().slice().reverse();
             
@@ -172,7 +170,7 @@ export const handleCanvasMouseDown = ({
             }
         }
 
-        // Mouse event handlers
+        // Mouse event handlers (unchanged)
         const mouseMoveHandler = (opt: fabric.TEvent) => {
             if (!isErasing) return;
             const p = canvas.getPointer(opt.e);
@@ -707,14 +705,27 @@ export const handleResize = ({
   canvas: Canvas | null;
 }) => {
   // const canvasElement = document.getElementById("canvas");
-  if (!canvasEl) return;
+  if (!canvasEl || !canvas) return;
+
+  const container = canvasEl.parentElement; // Absolute div in CanvasLayer
+  if (!container) return;
+
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+
+  // alert(`Resizing canvas: width=${width}, height=${height} (container: ${container.tagName}#${container.id || 'no-id'})`)
+
+  canvasEl.style.width = `${width}px`;
+  canvasEl.style.height = `${height}px`;
+
+  canvas.setDimensions({ width, height });
 
   // if (!canvas) return;
 
-  canvas?.setDimensions({
-    width: canvasEl.clientWidth,
-    height: canvasEl.clientHeight,
-  });
+  // canvas?.setDimensions({
+  //   width: canvasEl.clientWidth,
+  //   height: canvasEl.clientHeight,
+  // });
 }
 
 // export const renderCanvas = ({

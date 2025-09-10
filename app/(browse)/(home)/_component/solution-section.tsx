@@ -45,7 +45,7 @@ export function SolutionSection() {
                   className="flex items-start space-x-4 cursor-pointer"
                 >
                   <div className="flex-shrink-0">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-100 group-hover:bg-emerald-200 transition-colors duration-300">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-100 ">
                       <solution.icon className="h-6 w-6 text-emerald-600" />
                     </div>
                   </div>

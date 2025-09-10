@@ -1,9 +1,18 @@
 import { Button } from "@/components/ui/button"
 import { ArrowRight, CheckCircle } from "lucide-react"
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export function CTASection() {
+  const router = useRouter()
+  const {data:session} = useSession();
+    const isUser = session?.user;
+    const link = isUser ? `/w/${session.user.name}` : "/sign-up"
+  const onclickDirection = () => {
+    router.push(link)
+  }
   return (
-    <section className="py-20 bg-gradient-to-r from-primary/10 via-background to-secondary/10">
+    <section className="py-20 bg-gradient-to-r from-emerald-100 via-background to-secondary/10">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-foreground sm:text-4xl lg:text-5xl">
@@ -15,12 +24,11 @@ export function CTASection() {
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 text-lg">
+            <Button 
+            onClick={onclickDirection}
+            size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 text-lg">
               Start Your Free Trial
               <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button variant="outline" size="lg" className="px-8 py-4 text-lg bg-transparent">
-              Schedule a Demo
             </Button>
           </div>
 

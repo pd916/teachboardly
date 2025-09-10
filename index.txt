@@ -1,0 +1,69 @@
+useEffect(() => {
+  if (!socket) return;
+
+  const handleShapeUpdate = (shape: any) => {
+    const { canvases, activeIndex } = useCanvasStore.getState();
+    if (!shape.objectId) return;
+
+    const currentCanvaFabric = canvases[activeIndex];
+    const canvas = currentCanvaFabric?.fabricRef?.current;
+    if (!canvas) return;
+
+    const existing = canvas.getObjects().find(
+      (obj: any) => String(obj.objectId) === String(shape.objectId)
+    );
+
+    if (existing) {
+      const { type, clipPath, ...propsToSet } = shape;
+      existing.set(propsToSet);
+
+      // Universal clipPath logic
+      if (clipPath) {
+        let parsedClipPath = typeof clipPath === 'string' ? JSON.parse(clipPath) : clipPath;
+        let clipObj = null;
+
+        switch (parsedClipPath?.type) {
+          case "Polygon":
+            clipObj = new fabric.Polygon(parsedClipPath.points, { inverted: true, absolutePositioned: false, fill: 'rgba(0,0,0,1)', selectable: false, evented: false });
+            break;
+          case "Group":
+            clipObj = new fabric.Group(
+              parsedClipPath.objects.map((obj: any) => new fabric.Circle({ ...obj, fill: 'rgba(0,0,0,1)', selectable: false, evented: false })),
+              { inverted: true, absolutePositioned: false }
+            );
+            break;
+          case "Circle":
+            clipObj = new fabric.Circle({ ...parsedClipPath, fill: 'rgba(0,0,0,1)', selectable: false, evented: false });
+            break;
+          case "Rect":
+            clipObj = new fabric.Rect({ ...parsedClipPath, fill: 'rgba(0,0,0,1)', selectable: false, evented: false });
+            break;
+          // Add more types if needed
+        }
+
+        if (clipObj) {
+          existing.clipPath = clipObj;
+          canvas.remove(existing);
+          canvas.add(existing);
+        }
+      }
+
+      existing.setCoords();
+      canvas.requestRenderAll();
+      return;
+    }
+
+    // If shape doesn't exist, add it
+    fabric.util.enlivenObjects([shape]).then((objects) => {
+      objects.forEach((obj: any) => {
+        obj.id = shape.objectId;
+        obj.objectId = shape.objectId;
+        canvas.add(obj);
+      });
+      canvas.requestRenderAll();
+    });
+  };
+
+  socket.on("shape-updated", handleShapeUpdate);
+  return () => socket.off("shape-updated", handleShapeUpdate);
+}, [socket, activeIndex]);
