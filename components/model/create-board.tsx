@@ -58,10 +58,7 @@ const CreateBoard = () => {
             }
                 toast.success("Board Created")
 
-                if (isConnected && socket) {
-                    router.push(`/board/${res.id}`)
-                }
-                // router.push(`/board/${res.id}`)
+                router.push(`/board/${res.id}`)
                 onClose()
             })
             .catch(() => {
