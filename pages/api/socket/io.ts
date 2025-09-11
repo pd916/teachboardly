@@ -32,7 +32,13 @@ const ioHandler = (req:NextApiRequest, res: NextApiResponseServerIo) => {
             socket.on("join-board", ({ id, profile }) => {
         console.log(id, profile, "backend");
 
+         if (!id || !profile?.id || !profile?.name) {
+            return;
+        }
+
         socket.join(id);
+
+         userSockets.set(profile.id, socket.id);
 
         const alreadyJoined = boardMembers.some(
             member => member.id === profile.id && member.boardId === id
@@ -100,6 +106,31 @@ const ioHandler = (req:NextApiRequest, res: NextApiResponseServerIo) => {
 
                 console.log(`Host kicked user ${id} from board ${boardId}`);
                 })
+
+                socket.on("end-session", ({ boardId, hostId }) => {
+                if (!boardId || !hostId) return;
+                
+                console.log(`Host ${hostId} ending session for board ${boardId}`);
+                
+                // Remove all members from this board
+                boardMembers = boardMembers.filter(member => member.boardId !== boardId);
+                
+                // Notify all users in the board that session has ended
+                io.to(boardId).emit("session-ended", { boardId });
+                
+                // Disconnect all sockets in this board room
+                const socketsInRoom = io.sockets.adapter.rooms.get(boardId);
+                if (socketsInRoom) {
+                    socketsInRoom.forEach(socketId => {
+                        const socket = io.sockets.sockets.get(socketId);
+                        if (socket) {
+                            socket.leave(boardId);
+                        }
+                    });
+                }
+                
+                console.log(`Session ended for board ${boardId}`);
+            });
 
                 socket.on("update-shape", ({ boardId, shape }) => {
                 if (!boardId || !shape) return;

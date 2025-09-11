@@ -6,7 +6,7 @@ export function TestimonialsSection() {
     {
       name: "Sarah Chen",
       role: "Math Tutor",
-      avatar: "/placeholder-funy2.png",
+      avatar: "/assets/people/qu.jpg",
       content:
         "TutorLive has completely transformed how I teach online. The interactive whiteboard makes complex math problems so much easier to explain, and my students are more engaged than ever.",
       rating: 5,
@@ -14,7 +14,7 @@ export function TestimonialsSection() {
     {
       name: "Michael Rodriguez",
       role: "Language Teacher",
-      avatar: "/professional-male-teacher-headshot.png",
+      avatar: "/assets/people/jef.jpg",
       content:
         "The real-time collaboration features are incredible. My students can practice writing together, and I can provide instant feedback. It's like having a physical classroom online.",
       rating: 5,
@@ -22,7 +22,7 @@ export function TestimonialsSection() {
     {
       name: "Dr. Emily Watson",
       role: "Science Professor",
-      avatar: "/placeholder-k806s.png",
+      avatar: "/assets/people/tatiana.jpg",
       content:
         "I've tried many platforms, but TutorLive is the only one that truly supports interactive science lessons. The ability to draw diagrams and share documents seamlessly is game-changing.",
       rating: 5,
@@ -30,7 +30,7 @@ export function TestimonialsSection() {
     {
       name: "James Park",
       role: "Programming Instructor",
-      avatar: "/male-programming-instructor-headshot.png",
+      avatar: "/assets/people/vicky.jpg",
       content:
         "Teaching code online was always challenging until I found TutorLive. The screen sharing and collaborative coding features make it feel like we're sitting side by side.",
       rating: 5,
@@ -38,7 +38,7 @@ export function TestimonialsSection() {
     {
       name: "Lisa Thompson",
       role: "Art Teacher",
-      avatar: "/female-art-teacher-headshot.png",
+      avatar: "/assets/people/ying.jpg",
       content:
         "As an art teacher, I need visual tools that work flawlessly. TutorLive's drawing capabilities and color options let me demonstrate techniques in real-time with perfect clarity.",
       rating: 5,
@@ -46,7 +46,7 @@ export function TestimonialsSection() {
     {
       name: "David Kumar",
       role: "Business Coach",
-      avatar: "/professional-male-business-coach-headshot.png",
+      avatar: "/assets/people/swadha.jpg",
       content:
         "The analytics dashboard helps me track my students' progress and engagement. I can see exactly where they need more support and adjust my teaching accordingly.",
       rating: 5,

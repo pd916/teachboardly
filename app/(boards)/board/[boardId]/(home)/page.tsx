@@ -42,7 +42,7 @@ const Board = () => {
   const params = useParams()
   const pathname = usePathname();
   const {board} = useBoardData({ boardId: params?.boardId })
-  const {guests, addGuest, currentGuest, removeGuest} = useGuestStore()
+  const {guests, addGuest, currentGuest, removeGuest, clearGuests} = useGuestStore()
   const canvases = useCanvasStore((state) => state.canvases);
   const activeIndex = useCanvasStore((state) => state.activeIndex);
   const addCanvas = useCanvasStore((state) => state.addCanvas);
@@ -51,7 +51,7 @@ const Board = () => {
   // const undo = useCanvasStore((state) => state.undo);
   // const redo = useCanvasStore((state) => state.redo);
   const {data:session} = useSession();
-  const {socket} = useSocket();
+  const {socket, isConnected} = useSocket();
    const [isDrawingEnabled, setIsDrawingEnabled] = useState(false);
    const isUser = session?.user;
    const canvaFabric = canvases[activeIndex];
@@ -459,7 +459,7 @@ useEffect(() => {
 }, [isUser, params?.boardId, pathname, startTransition]);
 
   useEffect(() => {
-    if (!params?.boardId || !socket || !currentGuest) return;
+    if (!params?.boardId || !socket || !currentGuest || !isConnected) return;
 
     // const boardId = params.boardId;
 
@@ -779,7 +779,6 @@ useEffect(() => {
 
   const handleDrawingPermission = ({userId, allowed}:{userId:string, allowed:boolean}) => {
     
-    // const userExist = guests.find((i) => i.id === userId)
     console.log(userId, currentGuest, "id")
 
      if (userId === currentGuest?.id) {
@@ -794,10 +793,33 @@ useEffect(() => {
   }
 },[socket, currentGuest?.id])
 
+useEffect(() => {
+    if (!socket) return;
+
+    const handleSessionEnded = ({ boardId }: { boardId: string }) => {
+        console.log(`Session ended for board ${boardId}`);
+        
+         clearGuests();
+        // Redirect all users to home page
+        router.push('/'); // or wherever you want to redirect non-hosts
+        
+        // Optional: Show notification
+        // toast.info("Session has been ended by the host");
+    };
+
+    socket.on("session-ended", handleSessionEnded);
+
+    return () => {
+        socket.off("session-ended", handleSessionEnded);
+    };
+}, [socket, router]);
+
 
   return (
     <div className="h-screen flex flex-col">
       <Navabr
+      boardId={params?.boardId}
+      hostId={isUser?.id}
       />
 
         <main className="flex-1 bg-gray-50 pl-18 overflow-hidden">

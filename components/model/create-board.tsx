@@ -19,6 +19,7 @@ import { createBoard } from '@/actions/board';
 import { useRouter } from 'next/navigation';
 import { useGuestStore } from '@/hooks/use-guest-store';
 import { useSession } from 'next-auth/react';
+import { useSocket } from '../provider/socket-provider';
 
 const formSchema = z.object({
     title:z.string().min(1, {
@@ -29,6 +30,7 @@ const formSchema = z.object({
 const CreateBoard = () => {
     const {isOpen, onClose, type,} = useModelStore((state) => state);
     const { data: session } = useSession(); 
+    const {socket, isConnected} = useSocket()
     const [isPending, stratTransition] = useTransition()
     const router = useRouter()
 
@@ -55,7 +57,11 @@ const CreateBoard = () => {
               });
             }
                 toast.success("Board Created")
-                router.push(`/board/${res.id}`)
+
+                if (isConnected && socket) {
+                    router.push(`/board/${res.id}`)
+                }
+                // router.push(`/board/${res.id}`)
                 onClose()
             })
             .catch(() => {
