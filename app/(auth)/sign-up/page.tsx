@@ -8,7 +8,6 @@ import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import {
   Form,
-  FormControl,
   FormField,
   FormItem,
   FormLabel,
@@ -35,7 +34,7 @@ const { isSubmitting } = form.formState;
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     console.log(values)
-    const res = await axios.post('/api/sign-up', values)
+    const res = await axios.post(`${process.env.NEXT_PUBLIC_URL}/api/sign-up`, values)
     if(res.data.success){
       toast.success(res.data.message ||"User register Successfully")
       form.reset()

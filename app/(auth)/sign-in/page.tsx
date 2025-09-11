@@ -15,14 +15,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getSession, signIn } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useGuestStore } from '@/hooks/use-guest-store';
 import { formSchema } from './schema';
 
 const Page = () => {
   const router = useRouter();
-  const {setCurrentGuest} = useGuestStore((state) => state);
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {

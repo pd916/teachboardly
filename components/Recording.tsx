@@ -52,7 +52,7 @@ const Recording = ({canvasRef, boardId, state}:RecordingProps) => {
        reader.onloadend = () => {
        const base64String = reader.result;
 
-    fetch('/api/upload', {
+    fetch(`${process.env.NEXT_PUBLIC_URL}/api/upload`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -37,7 +37,7 @@ export const InviteBoardModel = () => {
     const onNew = async () => {
         try {
             setIsLoading(true)
-            const response = await axios.patch(`/api/board/${boardId}/invite-code`);
+            const response = await axios.patch(`${process.env.NEXT_PUBLIC_URL}/api/board/${boardId}/invite-code`);
 
             onOpen("InviteCode", {board: response.data})
         } catch (error) {

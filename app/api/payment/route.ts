@@ -42,7 +42,7 @@ export async function POST(req: Request) {
             },
             unitPrice: {
               currencyCode: "USD",
-              amount: "999" // $9.99 in cents
+              amount: "9.99" // $9.99 in cents
             },
             product: {
               name: "Premium Subscription",
