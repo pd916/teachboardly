@@ -1,6 +1,5 @@
 "use client"
-import { useSocket } from '@/components/provider/socket-provider';
-import { Badge } from '@/components/ui/badge';
+import { useBoardPresence } from '@/components/provider/provider';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import React from 'react'
@@ -8,25 +7,24 @@ import React from 'react'
 interface HostProps{
     boardId:string | string[] | undefined
     hostId:string | undefined
+    hostname: string | undefined
 }
 
 const Navabr = ({
     boardId,
-    hostId
+    hostId,
+    hostname
 }:HostProps) => {
-   const {isConnected, socket} = useSocket();
+
+   const { endSession} = useBoardPresence(boardId, { id: hostId!, name:hostname, boardId })
+
+const handleEndSession = () => {
+  endSession()
+  router.push("/dashboard/hostname") // host redirect
+}
+
 
    const router = useRouter();
-
-    const handleEndSession = () => {
-        if (!socket || !isConnected) return;
-        
-        // Emit end session event
-        socket.emit("end-session", { boardId, hostId });
-        
-        // Redirect host to dashboard
-        router.push('/dashboard'); // Adjust path as needed
-    };
 
         return (
             <div className='min-h-14 flex items-center justify-between'>
@@ -39,17 +37,6 @@ const Navabr = ({
                     >End Session</Button>
                 )}
 
-                <div className='flex items-center justify-end px-12 py-3'>
-                    {isConnected ? (
-                <Badge variant="outline" className="bg-emerald-600 text-white border-none">
-                Live: Ral-time updates
-               </Badge>
-                ):(
-                <Badge variant="outline" className="bg-yellow-600 text-white border-none">
-                Fallback: Polling every is
-                </Badge>
-                )}
-                </div>
             </div>
         )
 }

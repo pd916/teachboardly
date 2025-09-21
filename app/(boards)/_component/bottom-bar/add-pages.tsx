@@ -4,8 +4,8 @@ import { useCanvasStore } from '@/hooks/use-canvas-store'
 import {v4 as uuidv4} from "uuid";
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import React from 'react'
-import { useSocket } from '@/components/provider/socket-provider';
 import { toast } from 'sonner';
+import { useCanvasRealtime } from '@/hooks/use-canvaRealTime';
 
 export type AddPagesProps = {
   boardId:string | string[] | undefined;
@@ -13,47 +13,67 @@ export type AddPagesProps = {
 }
 
 const AddPages = ({ boardId, isUser}:AddPagesProps) => {
-  const {socket} = useSocket()
     const {activeIndex, canvases, next, prev} = useCanvasStore((state) => state);
+     const {  emitAddCanva, emitSwitchCanvas } = useCanvasRealtime(boardId)
     // const userplan = isUser.subscr
-    console.log(isUser, "subss")
+    console.log(isUser, activeIndex, "subss")
 
-    const handlePrev = () => {
-   const newIndex = Math.max(0, activeIndex - 1);
-  prev();
-  if (socket && typeof boardId === 'string') {
-    socket.emit('switch-canvas', { boardId, index: newIndex });
-  }
+   const handlePrev = () => {
+    const newIndex = Math.max(0, activeIndex - 1);
+    prev();
+    if (typeof boardId === 'string') {
+      emitSwitchCanvas(newIndex);
+    }
   };
 
   const handleNextCanvas = () => {
-  const isLast = activeIndex === canvases.length - 1;
+    const isLast = activeIndex === canvases.length - 1;
 
- 
-  if (isLast) {
-    if ((isUser === "TRIALING" || isUser === "EXPIRED") && canvases.length >= 2) {
-      toast.error("Upgrade your plan to add more canvases.");
-      return;
-    }
+    if (isLast) {
+      if ((isUser === "TRIALING" || isUser === "EXPIRED") && canvases.length >= 2) {
+        toast.error("Upgrade your plan to add more canvases.");
+        return;
+      }
 
-    if (socket) {
-      socket.emit('add-canva', {
-        boardId,
-        canva: {
-          id: uuidv4(),
-          history: [],
-          historyIndex: -1
-        }
+      const newCanva = {
+        id: uuidv4(),
+        history: [],
+        historyIndex: -1
+      };
+
+       // Add locally first (update your own state)
+      const domRef = React.createRef<HTMLCanvasElement>();
+      const fabricRef = React.createRef<any>();
+      const shapeRef = { current: null } as React.RefObject<any>;
+      const selectedShapeRef = { current: null } as React.RefObject<string | null>;
+      const isDrawing = { current: false } as React.RefObject<boolean>;
+      const imageInputRef = { current: null } as React.RefObject<HTMLInputElement | null>;
+      const activeObjectRef = { current: null } as React.RefObject<any>;
+      const isEditingRef = { current: false } as React.RefObject<boolean>;
+
+      useCanvasStore.getState().addCanvas({
+        ...newCanva,
+        domRef,
+        fabricRef,
+        shapeRef,
+        selectedShapeRef,
+        isDrawing,
+        imageInputRef,
+        activeObjectRef,
+        isEditingRef
       });
+
+      // Emit add-canva event (equivalent to socket.emit('add-canva', {...}))
+      emitAddCanva(newCanva);
+    } else {
+      // Moving between existing canvases is always allowed
+      next();
+      if (typeof boardId === 'string') {
+        emitSwitchCanvas(activeIndex + 1);
+      }
     }
-  } else {
-    // ✅ Moving between existing canvases is always allowed
-    next();
-    if (socket && typeof boardId === 'string') {
-      socket.emit('switch-canvas', { boardId, index: activeIndex + 1 });
-    }
-  }
-};
+  };
+
   return (
     <div className='flex gap-0 items-center'>
         <Button
@@ -63,7 +83,7 @@ const AddPages = ({ boardId, isUser}:AddPagesProps) => {
         >
             <ArrowLeft/>
         </Button>
-        {activeIndex}
+        {activeIndex + 1} / {canvases.length}
         <Button
         variant="ghost"
         size="icon"

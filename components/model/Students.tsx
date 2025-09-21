@@ -4,12 +4,10 @@ import {
     DialogContent,
     DialogHeader,
     DialogDescription ,
-    DialogFooter,
     DialogTitle
 } from "@/components/ui/dialog"
 import { useModelStore } from '@/hooks/use-model';
 import StudentsList from "../students-list";
-import { useParams } from "next/navigation";
 import { useGuestStore } from "@/hooks/use-guest-store";
 import { useSession } from "next-auth/react";
 import { ScrollArea } from "../ui/scroll-area";

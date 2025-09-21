@@ -3,8 +3,8 @@ import React, { useState } from 'react'
 import { Button } from './ui/button'
 import UserAvatar from './UserAvatar'
 import { useParams } from 'next/navigation'
-import { useSocket } from './provider/socket-provider'
 import { Badge } from './ui/badge'
+import { useBoardPresence } from './provider/provider'
 
 interface StudentsListProps {
     id?: string
@@ -17,33 +17,21 @@ const StudentsList = ({
     name,
     adminId
 }:StudentsListProps) => {
-  const {socket} = useSocket();
   const params = useParams();
-  const [isDrawingEnabled, setIsDrawingEnabled] = useState(false);
+  const { kickMember, handleDrawingPermission} = useBoardPresence(params?.boardId, {
+  id: id,        // make sure it's a string, not undefined
+  name: name,
+  boardId: params?.boardId
+})
+
+const [localAllowed, setLocalAllowed] = useState(false)
     console.log(params?.boardId, "memb")
 
-  const kickMember = (id:string) => {
-    if(!id || !socket) return;
-
-    socket.emit("kick-member", {
-      id,
-      boardId:params?.boardId
-    })
-
-  }
-
-  const handleDrawingPermission = (id: string) => {
-    if(!socket) return;
-    
-    const newStatus = !isDrawingEnabled;
-    setIsDrawingEnabled(newStatus);
-    console.log(id, newStatus, 'usersidddd')
-
-    socket.emit('can-draw', {
-      id,
-      boardId:params?.boardId,
-      allowed: newStatus,
-    } )
+    const handleDrawingPermissionToggle = (userId: string) => {
+      if (!userId) return;
+    const next = !localAllowed
+    setLocalAllowed(next)                 // flip button label
+    handleDrawingPermission(userId, next)    // broadcast to that user
   }
 
   return (
@@ -60,12 +48,12 @@ const StudentsList = ({
       {id !== adminId && (
         <div className='flex gap-2'>
         <Button 
-        variant={isDrawingEnabled ? 'destructive' : 'primary'} 
+        variant={localAllowed ? 'destructive' : 'primary'} 
         size="sm" 
-        onClick={() => handleDrawingPermission(id!)}
+         onClick={() => handleDrawingPermissionToggle(id!)}
         aria-label={`Kick ${name || "user"}`}
         >
-          {isDrawingEnabled ? "undraw" : "can darw"}
+          {localAllowed ? "undraw" : "can darw"}
       </Button>
         <Button 
         variant="destructive" 

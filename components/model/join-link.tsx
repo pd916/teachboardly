@@ -16,12 +16,12 @@ import { useModelStore } from "@/hooks/use-model";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { useGuestStore } from "@/hooks/use-guest-store";
-import { useSocket } from "../provider/socket-provider";
+// import { useSocket } from "../provider/socket-provider";
 import { toast } from "sonner";
 
 
 export const JoinLinkModel = () => {
-    const {socket} = useSocket()
+    // const {socket} = useSocket()
     const router = useRouter();
     const {isOpen, onClose, type} = useModelStore()
     const {guests, setCurrentGuest,} = useGuestStore((state) => state)
@@ -47,7 +47,7 @@ export const JoinLinkModel = () => {
 
         const res = await axios.post(url, {value})
         console.log(res, "guests")
-        if(res.data && socket ){
+        if(res.data){
             const guest = res.data.guest;
             // const board = res.data.board;
 
@@ -69,6 +69,20 @@ export const JoinLinkModel = () => {
     }
 
     }
+
+    // const onJoining = async (e:React.FormEvent) => {
+    //     e.preventDefault();
+    //    if (!value.link.trim()) return;
+    //    setIsLoading(true);
+
+    //     const guest = {
+    //         id:uuidv4,
+    //         name: value.name,
+    //         boardId: 12312312
+    //     }
+
+        
+    // }
 
     return (
         <Dialog open={isModalOpen} onOpenChange={onClose}>

@@ -4,7 +4,6 @@ import "./globals.css";
 import AuthProvider from "@/context/auth-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ModalProvider } from "@/components/ModelProvider";
-import { SocketProvider } from "@/components/provider/socket-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,10 +41,8 @@ export default function RootLayout({
         >
           {/* <DesmosScript/> */}
       <AuthProvider>
-          <SocketProvider>
         <ModalProvider/>
         {children}
-          </SocketProvider>
          <Toaster />
       </AuthProvider>
       </body>

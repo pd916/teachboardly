@@ -1,14 +1,12 @@
 "use client"
 import Color from '@/components/settings/Color'
-import { Button } from '@/components/ui/button';
 import { modifyShape } from '@/lib/shapes';
 import { RightSidebarProps } from '@/types/type'
 import { Canvas, Point, TEvent } from 'fabric';
 import { HandIcon, Redo, Undo, ZoomIn, ZoomOut } from 'lucide-react';
 import React, { useRef, useState } from 'react'
 import BottombarButton from './bottombar-button';
-import { useCanvasStore } from '@/hooks/use-canvas-store';
-import { useSocket } from '@/components/provider/socket-provider';
+import { useCanvasRealtime } from '@/hooks/use-canvaRealTime';
 
 type PanCanvas = Canvas & { isDragging?: boolean; lastX?: number; lastY?: number };
 
@@ -22,6 +20,8 @@ const Rightbar = ({
   syncShapeInStorage,
   boardId
 }:RightSidebarProps) => {
+
+  const { emitViewportUpdate } = useCanvasRealtime(boardId)
 
   
 const panHandlersRef = useRef<{
@@ -65,6 +65,11 @@ const panHandlersRef = useRef<{
 
     canvas.zoomToPoint(center, newZoom)
     setZoom(newZoom)
+
+    emitViewportUpdate({
+    zoom: newZoom,
+    viewportTransform: canvas.viewportTransform!
+  })
   }
 
   const zoomIn = () => {
@@ -113,6 +118,11 @@ const togglePan = () => {
     canvas.lastX = opt.e.clientX;
     canvas.lastY = opt.e.clientY;
     canvas.requestRenderAll();
+
+     emitViewportUpdate({
+    zoom: canvas.getZoom(),
+    viewportTransform: vpt
+  });
   };
 
   const up = () => {
