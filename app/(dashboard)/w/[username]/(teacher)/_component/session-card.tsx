@@ -1,6 +1,5 @@
 "use client";
 
-import { useSocket } from "@/components/provider/socket-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGuestStore } from "@/hooks/use-guest-store";
