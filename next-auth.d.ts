@@ -26,11 +26,3 @@ declare module "next-auth/jwt" {
         imageUrl?: string | null; // ✅ Added imageUrl to JWT interface
     }
 }
-
-export type NextApiResponseServerIo = NextApiResponse &  {
-    socket: Socket & {
-        server: NetServer & {
-            io: SocketIOServer;
-        };
-    };
-};

@@ -1,11 +1,11 @@
 import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/db";
-import { NextApiResponseServerIo } from "@/types";
-import { NextApiRequest } from "next";
+
+import { NextApiRequest, NextApiResponse } from "next";
 
 let members:any[] = []
 
-export default async function handler(req: NextApiRequest, res:NextApiResponseServerIo) {
+export default async function handler(req: NextApiRequest, res:NextApiResponse ) {
     if(req.method !== "POST") {
         return res.status(405).json({error: "Method not allowed"});
     }
