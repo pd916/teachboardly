@@ -27,7 +27,7 @@ const BottomBar = ({
 }:BottombarProps) => {
   const isActive = (value: string | Array<ActiveElement>) => 
     (Array.isArray(value) && value.some((val) => val?.value === activeElement?.value))
-  console.log(userplan)
+  console.log(userplan, "comeeeee")
   
   return (
     <div className="bg-white lg:min-w-4xl lg:ml-20 rounded-lg 

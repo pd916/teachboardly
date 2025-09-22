@@ -1,75 +1,93 @@
 import { getSelf } from "@/lib/auth-service";
 import { db } from "@/lib/db";
-import {Environment, Paddle} from "@paddle/paddle-node-sdk";
-import { NextResponse } from "next/server";
+import { Environment, Paddle } from "@paddle/paddle-node-sdk";
+import { NextRequest, NextResponse } from "next/server";
 
-const paddle = new Paddle(process.env.PADDLE_SECRET_TOKEN!, {
-    environment: Environment.sandbox
+// Validate environment variables at startup
+const PADDLE_SECRET_TOKEN = process.env.PADDLE_SECRET_TOKEN;
+if (!PADDLE_SECRET_TOKEN) {
+  throw new Error("PADDLE_SECRET_TOKEN environment variable is required");
+}
+
+// Init Paddle SDK
+const paddle = new Paddle(PADDLE_SECRET_TOKEN, {
+  environment: Environment.sandbox, // Keep sandbox until production
 });
 
-export async function POST(req: Request) {
+// Replace with your real Paddle Price ID from dashboard
+const PREMIUM_PLAN_PRICE_ID = process.env.PADDLE_PREMIUM_PLAN_PRICE_ID || "pri_123456789";
+
+export async function POST(req: NextRequest) {
   try {
+    // Authentication
     const self = await getSelf();
-    if (!self) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!self?.id) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
+    // Check for existing active subscription
     const existingSubscription = await db.subscription.findFirst({
       where: {
         userId: self.id,
-        status: { in: ["ACTIVE", "TRIALING"] }
-      }
+        status: { in: ["ACTIVE"] },
+      },
+      select: { id: true, status: true, paddleSubscriptionId: true },
     });
 
     if (existingSubscription) {
       return NextResponse.json(
-        { error: "User already has an active subscription" },
+        { error: "You already have an active subscription" },
         { status: 400 }
       );
     }
 
-    const txn = await paddle.transactions.create({
+    // Create transaction with Paddle
+    const transactionData = {
       items: [
         {
           quantity: 1,
-          price: {
-            name: "Premium Monthly Plan",
-            description:
-              "Access to all premium features including unlimited participants, screen sharing, and more.",
-            billingCycle:{
-              interval: 'month',
-              frequency: 1,
-            },
-            unitPrice: {
-              currencyCode: "USD",
-              amount: "9.99" // $9.99 in cents
-            },
-            product: {
-              name: "Premium Subscription",
-              description:
-                "Monthly premium subscription with full access to all features",
-              taxCategory: "saas"
-            }
-          }
-        }
+          priceId: PREMIUM_PLAN_PRICE_ID, // ✅ use priceId instead of full object
+        },
       ],
       customData: {
         userId: self.id,
-        planType: "premium"
-      }
+        planType: "premium",
+        createdAt: new Date().toISOString(),
+      },
+      customer: {
+        email: self.email || undefined,
+      },
+      // ✅ removed billingDetails (not needed for basic subscription checkout)
+    };
+
+    const transaction = await paddle.transactions.create(transactionData);
+
+    if (!transaction?.id) {
+      throw new Error("Failed to create transaction with Paddle");
+    }
+
+    // Store pending transaction in DB
+    await db.subscription.create({
+      data: {
+        userId: self.id,
+        paddleSubscriptionId: transaction.id,
+        status: "TRIALING", // Updated by webhook later
+        trialEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days trial
+        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      },
     });
 
-    return NextResponse.json({
-      txn,
-      transactionId: txn.id
+    return NextResponse.json({ transactionId: transaction.id });
+  } catch (error) {
+    console.error("Payment route error:", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
     });
-  } catch (err) {
-    console.error("Payment route error:");
+
     return NextResponse.json(
-      { error: "Failed to create transaction" },
+      { error: "Unable to process payment. Please try again later." },
       { status: 500 }
     );
   }
 }
-
-

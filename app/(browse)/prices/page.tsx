@@ -1,9 +1,10 @@
 'use client'
 
-import { Check, Diamond } from "lucide-react";
+import { Check, Diamond, Loader2 } from "lucide-react";
 import {initializePaddle, Paddle} from "@paddle/paddle-js"
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 
 const plans = [
   {
@@ -43,48 +44,113 @@ const plans = [
 ];
 export default function Pricing() {
 const [paddle, setPaddle] = useState<Paddle>();
+  const [isLoading, setIsLoading] = useState(false);
+  const [paddleLoading, setPaddleLoading] = useState(true);
+  const { data: session } = useSession();
 
-useEffect(() => {
-    initializePaddle({
-      environment: 'sandbox',
-      token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!
-    }).then((paddle) => {
-      if (paddle) {
-        setPaddle(paddle);
-        console.log('Paddle initialized successfully');
+  useEffect(() => {
+    const initPaddle = async () => {
+      try {
+        // Validate environment variables
+        if (!process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) {
+          throw new Error('Paddle client token not configured');
+        }
+
+        const paddleInstance = await initializePaddle({
+          environment: 'sandbox', // Always sandbox for now
+          token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
+        });
+
+        if (paddleInstance) {
+          setPaddle(paddleInstance);
+          console.log('Paddle initialized successfully');
+        } else {
+          throw new Error('Paddle initialization failed');
+        }
+      } catch (error) {
+        console.error('Failed to initialize Paddle:', error);
+        toast.error('Payment system unavailable. Please try again later.');
+      } finally {
+        setPaddleLoading(false);
       }
-    }).catch((error) => {
-      console.error('Failed to initialize Paddle:', error);
-      toast.error('Payment system failed to initialize');
-    });
-  }, []);
+    };
 
-const handleCheckout = async () => {
-  if (!paddle) return toast("Paddle not initialized");
+    initPaddle();
+  }, [session?.user?.id]);
 
-  const res = await fetch("/api/payment", { method: "POST" });
+  const handleCheckout = async () => {
+    // Validation checks
+    if (!session?.user) {
+      toast.error('Please sign in to upgrade your plan');
+      return;
+    }
 
-  if (!res.ok) {
-    let message = "Payment failed";
+    if (!paddle) {
+      toast.error('Payment system not ready. Please wait.');
+      return;
+    }
+
+    if (isLoading) return; // Prevent double-clicking
+
+    setIsLoading(true);
+
     try {
-      const errData = await res.json();
-      if (errData?.error) message = errData.error;
-    } catch {
-      // ignore parse error
+      // Create transaction on server
+      const response = await fetch('/api/payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Add CSRF token if you're using one
+        credentials: 'same-origin',
+      });
+
+      if (!response.ok) {
+        let errorMessage = 'Payment failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData?.error || errorMessage;
+        } catch {
+          // Use default error message if JSON parsing fails
+        }
+        throw new Error(errorMessage);
+      }
+
+      const { transactionId } = await response.json();
+
+      if (!transactionId) {
+        throw new Error('Invalid transaction response');
+      }
+
+      // Open Paddle checkout
+      await paddle.Checkout.open({
+        transactionId,
+        settings: {
+          theme: 'dark',
+          locale: 'en',
+          allowLogout: false,
+          successUrl: `${window.location.origin}/?upgrade=success`,
+          // Add customer info for better UX
+        },
+      });
+
+    } catch (error) {
+      console.error('Checkout error:', error);
+      const message = error instanceof Error ? error.message : 'Payment failed';
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
     }
-    return toast.error(message);
+  };
+
+  if (paddleLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading payment system...</span>
+      </div>
+    );
   }
-
-  const data = await res.json();
-  paddle.Checkout.open({ 
-    transactionId: data.transactionId,
-    settings: {
-      theme: 'dark',
-      successUrl: 'http://localhost:3000/'
-    }
-   });
-};
-
 
 
 

@@ -328,46 +328,51 @@ const Board = () => {
 
  
   useEffect(() => {
-  // Early return if not a user or no boardId
   if (!isUser || !params?.boardId) return;
   
   const boardId = params.boardId as string;
   const currentBoardPath = `/board/${boardId}`;
+  let isDeleting = false;
   
-  const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-    // Only run if currently on this board page
-    if (window.location.pathname === currentBoardPath) {
-      startTransition(async () => {
-        try {
-          await deleteBoardOnLeave(boardId);
-        } catch (error) {
-          console.log(error);
-        }
-      });
-    }
-  };
-  
-  // Add the event listener
-  window.addEventListener("beforeunload", handleBeforeUnload);
-  
-  // Cleanup function
-  return () => {
-    // Remove the event listener
-    window.removeEventListener("beforeunload", handleBeforeUnload);
+  const safeDelete = async () => {
+    if (isDeleting) return;
+    isDeleting = true;
     
-    // Handle navigation away from board page
-    // This runs when component unmounts (navigation)
-    if (isUser && window.location.pathname !== currentBoardPath) {
-      startTransition(async () => {
-        try {
-          await deleteBoardOnLeave(boardId);
-        } catch (error) {
-          console.log(error);
-        }
-      });
+    try {
+      await deleteBoardOnLeave(boardId);
+    } catch (error) {
+      console.log(error);
     }
   };
-}, [isUser, params?.boardId, pathname, startTransition]);
+  
+  // Handle tab close/refresh - more reliable than beforeunload
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'hidden' && window.location.pathname === currentBoardPath) {
+      safeDelete();
+    }
+  };
+  
+  // Backup: Handle beforeunload
+  const handleBeforeUnload = () => {
+    if (window.location.pathname === currentBoardPath) {
+      safeDelete();
+    }
+  };
+  
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  window.addEventListener('beforeunload', handleBeforeUnload);
+  
+  return () => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    window.removeEventListener('beforeunload', handleBeforeUnload);
+    
+    // Only delete if navigating away from this board
+    const currentPath = window.location.pathname;
+    if (currentPath !== currentBoardPath && !isDeleting) {
+      safeDelete();
+    }
+  };
+}, [isUser, params?.boardId]);
 
 
 const {isDrawingEnabled} = useBoardPresence(params?.boardId, {
