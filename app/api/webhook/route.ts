@@ -2,220 +2,163 @@ import { Environment, EventName, Paddle } from "@paddle/paddle-node-sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-// Validate environment variables
-const PADDLE_SECRET_TOKEN = process.env.PADDLE_SECRET_TOKEN;
-const WEBHOOK_SECRET_KEY = process.env.WEBHOOK_SECRET_KEY;
+// Env reads (no throwing at module load)
+const PADDLE_SECRET_TOKEN = process.env.PADDLE_SECRET_TOKEN || null;
+const WEBHOOK_SECRET_KEY = process.env.WEBHOOK_SECRET_KEY || null;
 
-if (!PADDLE_SECRET_TOKEN || !WEBHOOK_SECRET_KEY) {
-  throw new Error('Missing required Paddle environment variables');
-}
+// Safe SDK init at module scope
+const paddle = PADDLE_SECRET_TOKEN
+  ? new Paddle(PADDLE_SECRET_TOKEN, { environment: Environment.sandbox })
+  : null;
 
-const paddle = new Paddle(PADDLE_SECRET_TOKEN, {
-  environment: Environment.sandbox // Always sandbox for now
-});
-
-// Webhook event handlers
-const eventHandlers = {
+// Handlers
+const eventHandlers: Record<string, (eventData: any) => Promise<void>> = {
+  // Optional: Track transactions if you keep a separate table.
+  // Otherwise, it's fine to ignore this and rely only on subscription events.
   [EventName.TransactionCompleted]: async (eventData: any) => {
     const { customData, id: transactionId, status } = eventData.data;
-    
-    if (status !== 'completed') return;
-    
-    const userId = customData?.userId;
-    if (!userId) {
-      console.error('No userId in transaction custom data');
+    if (!customData?.userId) {
+      console.error("TransactionCompleted: Missing userId in customData");
       return;
     }
-
-    try {
-      // Update subscription to ACTIVE
-      await db.subscription.updateMany({
-        where: {
-          userId,
-          paddleSubscriptionId: transactionId
-        },
-        data: {
-          status: 'ACTIVE',
-          currentPeriodEnd: new Date(eventData.data.billedAt || Date.now() + 30 * 24 * 60 * 60 * 1000),
-        }
-      });
-
-      console.log(`Transaction completed for user ${userId}`);
-    } catch (error) {
-      console.error('Error updating subscription:', error);
-      throw error; // Re-throw to trigger webhook retry
-    }
+    // If you have a 'transactions' table, persist it here.
+    // If not, you can safely ignore or just log.
+    console.log("TransactionCompleted:", { transactionId, status, userId: customData.userId });
   },
 
   [EventName.SubscriptionActivated]: async (eventData: any) => {
     const { customData, id: subscriptionId, currentBillingPeriod } = eventData.data;
-    
+
     const userId = customData?.userId;
     if (!userId) {
-      console.error('No userId in subscription custom data');
+      console.error("SubscriptionActivated: Missing userId in customData");
       return;
     }
 
-    try {
-      await db.subscription.upsert({
-  where: {
-    paddleSubscriptionId: subscriptionId
-  },
-  update: {
-    status: 'ACTIVE',
-    currentPeriodEnd: new Date(currentBillingPeriod?.endsAt),
-    cancelAtPeriodEnd: false,
-  },
-  create: {
-    userId,
-    paddleSubscriptionId: subscriptionId,
-    status: 'ACTIVE',
-    trialEndsAt: new Date(),
-    currentPeriodEnd: new Date(currentBillingPeriod?.endsAt),
-  }
-});
+    await db.subscription.upsert({
+      where: { paddleSubscriptionId: subscriptionId },
+      update: {
+        status: "ACTIVE",
+        currentPeriodEnd: currentBillingPeriod?.endsAt ? new Date(currentBillingPeriod.endsAt) : null,
+        cancelAtPeriodEnd: false,
+      },
+      create: {
+        userId,
+        paddleSubscriptionId: subscriptionId,
+        status: "ACTIVE",
+        trialEndsAt: new Date(), // You can set this based on your plan; or omit if not needed
+        currentPeriodEnd: currentBillingPeriod?.endsAt ? new Date(currentBillingPeriod.endsAt) : null,
+      },
+    });
 
-      console.log(`Subscription activated for user ${userId}`);
-    } catch (error) {
-      console.error('Error handling subscription activation:', error);
-      throw error;
-    }
+    console.log(`Subscription activated for user ${userId} (sub: ${subscriptionId})`);
   },
 
   [EventName.SubscriptionUpdated]: async (eventData: any) => {
     const { customData, id: subscriptionId, currentBillingPeriod, scheduledChange } = eventData.data;
-    
-    const userId = customData?.userId;
-    if (!userId) return;
 
-    try {
-      await db.subscription.updateMany({
-        where: {
-          paddleSubscriptionId: subscriptionId
-        },
-        data: {
-          currentPeriodEnd: new Date(currentBillingPeriod?.endsAt),
-          cancelAtPeriodEnd: scheduledChange?.action === 'cancel',
-        }
-      });
+    if (!customData?.userId) return;
 
-      console.log(`Subscription updated for user ${userId}`);
-    } catch (error) {
-      console.error('Error updating subscription:', error);
-      throw error;
-    }
+    await db.subscription.updateMany({
+      where: { paddleSubscriptionId: subscriptionId },
+      data: {
+        currentPeriodEnd: currentBillingPeriod?.endsAt ? new Date(currentBillingPeriod.endsAt) : null,
+        cancelAtPeriodEnd: scheduledChange?.action === "cancel",
+      },
+    });
+
+    console.log(`Subscription updated (sub: ${subscriptionId})`);
   },
 
   [EventName.SubscriptionCanceled]: async (eventData: any) => {
-    const { customData, id: subscriptionId, canceledAt } = eventData.data;
-    
-    const userId = customData?.userId;
-    if (!userId) return;
+    const { customData, id: subscriptionId } = eventData.data;
+    if (!customData?.userId) return;
 
-    try {
-      await db.subscription.updateMany({
-        where: {
-          paddleSubscriptionId: subscriptionId
-        },
-        data: {
-          status: 'CANCELED',
-          // Keep access until current period ends
-          cancelAtPeriodEnd: true,
-        }
-      });
+    await db.subscription.updateMany({
+      where: { paddleSubscriptionId: subscriptionId },
+      data: {
+        status: "CANCELED",
+        cancelAtPeriodEnd: true, // Access until current period end
+      },
+    });
 
-      console.log(`Subscription canceled for user ${userId}`);
-    } catch (error) {
-      console.error('Error canceling subscription:', error);
-      throw error;
-    }
+    console.log(`Subscription canceled (sub: ${subscriptionId})`);
   },
 
   [EventName.SubscriptionPastDue]: async (eventData: any) => {
     const { customData, id: subscriptionId } = eventData.data;
-    
-    const userId = customData?.userId;
-    if (!userId) return;
+    if (!customData?.userId) return;
 
-    try {
-      await db.subscription.updateMany({
-        where: {
-          paddleSubscriptionId: subscriptionId
-        },
-        data: {
-          status: 'EXPIRED',
-        }
-      });
+    await db.subscription.updateMany({
+      where: { paddleSubscriptionId: subscriptionId },
+      data: { status: "EXPIRED" },
+    });
 
-      console.log(`Subscription expired for user ${userId}`);
-    } catch (error) {
-      console.error('Error handling subscription expiry:', error);
-      throw error;
-    }
-  }
+    console.log(`Subscription past due (sub: ${subscriptionId})`);
+  },
 };
 
 export async function POST(req: NextRequest) {
   try {
-    // Security: Verify webhook signature
-    const signature = req.headers.get('paddle-signature');
-    if (!signature) {
-      console.error('Missing Paddle signature header');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Runtime env validation
+    if (!paddle || !WEBHOOK_SECRET_KEY) {
+      console.error("Webhook misconfiguration: missing Paddle credentials");
+      return NextResponse.json({ error: "Server misconfiguration" }, { status: 500 });
     }
 
-    // Get raw body for signature verification
+    // Verify signature
+    const signature = req.headers.get("paddle-signature");
+    if (!signature) {
+      console.error("Missing Paddle signature header");
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get raw body to verify
     const rawBody = await req.text();
     if (!rawBody) {
-      console.error('Empty webhook body');
-      return NextResponse.json({ error: 'Bad Request' }, { status: 400 });
+      console.error("Empty webhook body");
+      return NextResponse.json({ error: "Bad Request" }, { status: 400 });
     }
 
     // Verify webhook authenticity
-    let eventData;
+    let eventData: any;
     try {
-      eventData = await paddle.webhooks.unmarshal(rawBody, WEBHOOK_SECRET_KEY!, signature);
+      eventData = await paddle.webhooks.unmarshal(rawBody, WEBHOOK_SECRET_KEY, signature);
     } catch (error) {
-      console.error('Webhook signature verification failed:', error);
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+      console.error("Webhook signature verification failed:", error);
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
     if (!eventData?.eventType) {
-      console.error('Invalid event data structure');
-      return NextResponse.json({ error: 'Invalid event' }, { status: 400 });
+      console.error("Invalid event data structure");
+      return NextResponse.json({ error: "Invalid event" }, { status: 400 });
     }
 
-    // Log webhook event for debugging
-    console.log('Received webhook:', {
+    console.log("Received webhook:", {
       eventType: eventData.eventType,
       eventId: eventData.eventId,
       timestamp: new Date().toISOString(),
     });
 
-    // Handle the event
+    // Dispatch to handler
     const handler = eventHandlers[eventData.eventType as keyof typeof eventHandlers];
-    
     if (handler) {
       await handler(eventData);
-      console.log(`Successfully processed ${eventData.eventType} event`);
+      console.log(`Processed ${eventData.eventType}`);
     } else {
       console.log(`Unhandled event type: ${eventData.eventType}`);
     }
 
-    // Always return 200 to acknowledge receipt
+    // Acknowledge
     return NextResponse.json({ received: true });
-
-  } catch (error) {
-    console.error('Webhook processing error:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
+  } catch (error: any) {
+    console.error("Webhook processing error:", {
+      error: error?.message || "Unknown error",
+      stack: error?.stack,
       timestamp: new Date().toISOString(),
     });
 
-    // Return 500 to trigger Paddle's retry mechanism
-    return NextResponse.json(
-      { error: 'Internal server error' }, 
-      { status: 500 }
-    );
+    // 500 triggers Paddle retry (good for transient failures)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

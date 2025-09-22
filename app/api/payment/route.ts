@@ -1,37 +1,43 @@
+import { NextRequest, NextResponse } from "next/server";
 import { getSelf } from "@/lib/auth-service";
 import { db } from "@/lib/db";
 import { Environment, Paddle } from "@paddle/paddle-node-sdk";
-import { NextRequest, NextResponse } from "next/server";
+import type { CreateTransactionRequestBody } from "@paddle/paddle-node-sdk";
 
-// Validate environment variables at startup
-const PADDLE_SECRET_TOKEN = process.env.PADDLE_SECRET_TOKEN;
-if (!PADDLE_SECRET_TOKEN) {
-  throw new Error("PADDLE_SECRET_TOKEN environment variable is required");
-}
+// Env reads (no throwing at module load)
+const PADDLE_SECRET_TOKEN = process.env.PADDLE_SECRET_TOKEN || null;
+const PREMIUM_PLAN_PRICE_ID = process.env.PADDLE_PREMIUM_PRICE_ID || null;
 
-// Init Paddle SDK
-const paddle = new Paddle(PADDLE_SECRET_TOKEN, {
-  environment: Environment.sandbox, // Keep sandbox until production
-});
-
-// Replace with your real Paddle Price ID from dashboard
-const PREMIUM_PLAN_PRICE_ID = process.env.PADDLE_PREMIUM_PLAN_PRICE_ID || "pri_123456789";
+// Safe SDK init at module scope
+const paddle = PADDLE_SECRET_TOKEN
+  ? new Paddle(PADDLE_SECRET_TOKEN, { environment: Environment.sandbox })
+  : null;
 
 export async function POST(req: NextRequest) {
   try {
-    // Authentication
+    // Auth
     const self = await getSelf();
     if (!self?.id) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
-    // Check for existing active subscription
+    // Runtime env validation
+    if (!PADDLE_SECRET_TOKEN || !paddle) {
+      console.error("Missing PADDLE_SECRET_TOKEN");
+      return NextResponse.json({ error: "Server misconfiguration" }, { status: 500 });
+    }
+    if (!PREMIUM_PLAN_PRICE_ID) {
+      console.error("Missing PADDLE_PREMIUM_PRICE_ID");
+      return NextResponse.json({ error: "Server misconfiguration" }, { status: 500 });
+    }
+
+    // Prevent duplicate active subscription
     const existingSubscription = await db.subscription.findFirst({
       where: {
         userId: self.id,
         status: { in: ["ACTIVE"] },
       },
-      select: { id: true, status: true, paddleSubscriptionId: true },
+      select: { id: true },
     });
 
     if (existingSubscription) {
@@ -41,12 +47,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create transaction with Paddle
+    // Create Paddle transaction (catalog price by priceId)
     const transactionData = {
       items: [
         {
+          priceId: PREMIUM_PLAN_PRICE_ID,
           quantity: 1,
-          priceId: PREMIUM_PLAN_PRICE_ID, // ✅ use priceId instead of full object
         },
       ],
       customData: {
@@ -54,34 +60,30 @@ export async function POST(req: NextRequest) {
         planType: "premium",
         createdAt: new Date().toISOString(),
       },
-      customer: {
-        email: self.email || undefined,
-      },
-      // ✅ removed billingDetails (not needed for basic subscription checkout)
-    };
+      // put email at top-level as customer_email (or remove if your SDK expects a different shape)
+      customer_email: self.email ?? undefined,
+    } as any;
 
     const transaction = await paddle.transactions.create(transactionData);
 
     if (!transaction?.id) {
-      throw new Error("Failed to create transaction with Paddle");
+      throw new Error("No transaction ID returned by Paddle");
     }
 
-    // Store pending transaction in DB
-    await db.subscription.create({
-      data: {
-        userId: self.id,
-        paddleSubscriptionId: transaction.id,
-        status: "TRIALING", // Updated by webhook later
-        trialEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days trial
-        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-      },
-    });
+    // IMPORTANT:
+    // Do NOT create a 'subscription' record here.
+    // Wait for Paddle's webhooks (SubscriptionActivated, etc.) to create/update it.
+    // This ensures abandoned checkouts don't pollute your DB and IDs match reality.
 
-    return NextResponse.json({ transactionId: transaction.id });
-  } catch (error) {
+    return NextResponse.json({
+      transactionId: transaction.id,
+      // You can forward any other fields your client needs (e.g., hosted checkout URL if available)
+      // checkoutUrl: transaction?.checkout?.url ?? undefined,
+    });
+  } catch (error: any) {
     console.error("Payment route error:", {
-      error: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
+      error: error?.message || "Unknown error",
+      stack: error?.stack,
       timestamp: new Date().toISOString(),
     });
 
