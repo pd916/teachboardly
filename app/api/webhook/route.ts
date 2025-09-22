@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 
 // Validate environment variables
 const PADDLE_SECRET_TOKEN = process.env.PADDLE_SECRET_TOKEN;
-const WEBHOOK_SECRET_KEY = process.env.PADDLE_WEBHOOK_SECRET;
+const WEBHOOK_SECRET_KEY = process.env.WEBHOOK_SECRET_KEY;
 
 if (!PADDLE_SECRET_TOKEN || !WEBHOOK_SECRET_KEY) {
   throw new Error('Missing required Paddle environment variables');
