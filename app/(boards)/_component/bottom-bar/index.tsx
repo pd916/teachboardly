@@ -86,7 +86,7 @@ const BottomBar = ({
         <Recording 
         canvasRef={canvasRef}
         boardId={boardId}
-        state={userplan !== SubscriptionStatus.ACTIVE}
+        isDisabled={userplan !== SubscriptionStatus.ACTIVE}
         />
       )}
     </div>
