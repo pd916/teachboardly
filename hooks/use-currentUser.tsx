@@ -32,7 +32,7 @@ export const useCurrentUser = () => {
 
       try {
         const self = await getUser(session.user.id)
-        setUser(self ?? null)
+        setUser(self || null)
         router.refresh()
       } catch (err) {
         console.error(err)

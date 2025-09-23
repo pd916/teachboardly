@@ -53,12 +53,12 @@ const Board = () => {
   const {data:session} = useSession();
    const isUser = session?.user;
    const canvaFabric = canvases[activeIndex];
-   const userPlan = userplan?.subscription[0].status
+   const userData = userplan?.subscription[0].status
   //  useFreePlanTimer({
   //   boardId:params?.boardId,
   //   user:isUser
   //  })
-   console.log( canvaFabric?.history, canvaFabric?.historyIndex, userPlan, "pensss")
+   console.log( canvaFabric?.history, canvaFabric?.historyIndex, userData, "pensss")
 
   const [elementAttributes, setElementAttributes] = useState<Attributes>({
     width: '',
@@ -434,8 +434,8 @@ useEffect(() => {
         {(isUser || isDrawingEnabled) && (
           <BottomBar
           activeElement={activeElement}
-          isUser={isUser}
-          userplan={userPlan}
+          isUser={session?.user}
+          userplan={userData}
           handleActiveElement={handleActiveElement}
           imageInputRef={canvaFabric?.imageInputRef}
           elementAttributes={elementAttributes}

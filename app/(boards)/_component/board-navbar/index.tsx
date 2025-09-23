@@ -20,7 +20,7 @@ const Navabr = ({
 
 const handleEndSession = () => {
   endSession()
-  router.push("/dashboard/hostname") // host redirect
+  router.push(`/dashboard/${hostname}`) // host redirect
 }
 
 
