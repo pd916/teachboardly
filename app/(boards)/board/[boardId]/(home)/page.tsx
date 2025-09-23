@@ -53,7 +53,7 @@ const Board = () => {
   const {data:session} = useSession();
    const isUser = session?.user;
    const canvaFabric = canvases[activeIndex];
-   const userData = userplan?.subscription[0].status
+   const userData = userplan?.subscription[0]
   //  useFreePlanTimer({
   //   boardId:params?.boardId,
   //   user:isUser
@@ -435,7 +435,7 @@ useEffect(() => {
           <BottomBar
           activeElement={activeElement}
           isUser={session?.user}
-          userplan={userData}
+          userplan={userData?.status}
           handleActiveElement={handleActiveElement}
           imageInputRef={canvaFabric?.imageInputRef}
           elementAttributes={elementAttributes}
