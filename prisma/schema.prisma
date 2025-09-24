@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // directUrl = env("DATABASE_DIRECT_URL")
 }
 
 model User {
@@ -59,6 +60,7 @@ model Subscription {
   paddleSubscriptionId String?           @unique
   status            SubscriptionStatus   @default(TRIALING)
   trialEndsAt       DateTime
+  currentPeriodStart DateTime? 
   currentPeriodEnd  DateTime?             // When the current paid period ends
   cancelAtPeriodEnd Boolean               @default(false)
   createdAt         DateTime              @default(now())

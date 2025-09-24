@@ -26,6 +26,9 @@ const eventHandlers: Record<string, (eventData: any) => Promise<void>> = {
         data: {
           paddleSubscriptionId: subscriptionId,
           status: "ACTIVE",
+           currentPeriodStart: currentBillingPeriod?.startsAt 
+            ? new Date(currentBillingPeriod.startsAt) 
+            : new Date(), // fallback to now
           currentPeriodEnd: currentBillingPeriod?.endsAt
             ? new Date(currentBillingPeriod.endsAt)
             : null,
@@ -41,6 +44,9 @@ const eventHandlers: Record<string, (eventData: any) => Promise<void>> = {
           paddleSubscriptionId: subscriptionId,
           status: "ACTIVE",
           trialEndsAt: new Date(),
+          currentPeriodStart: currentBillingPeriod?.startsAt 
+            ? new Date(currentBillingPeriod.startsAt) 
+            : new Date(),
           currentPeriodEnd: currentBillingPeriod?.endsAt
             ? new Date(currentBillingPeriod.endsAt)
             : null,
@@ -58,6 +64,9 @@ const eventHandlers: Record<string, (eventData: any) => Promise<void>> = {
     await db.subscription.updateMany({
       where: { paddleSubscriptionId: subscriptionId },
       data: {
+        currentPeriodStart: currentBillingPeriod?.startsAt
+          ? new Date(currentBillingPeriod.startsAt)
+          : null, // don't overwrite if not provided
         currentPeriodEnd: currentBillingPeriod?.endsAt
           ? new Date(currentBillingPeriod.endsAt)
           : null,
