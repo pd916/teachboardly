@@ -1,7 +1,7 @@
 import { getSelfByUsername } from "@/lib/auth-service"
 import { redirect } from "next/navigation";
-import { Navbar } from "./_component/navbar";
-import Sidebar from "./_component/sidebar";
+import { Navbar } from "../../../_component/navbar";
+import Sidebar from "../../../_component/sidebar";
 
 interface CreatorLayoutProps {
     children: React.ReactNode

@@ -327,45 +327,50 @@ const Board = () => {
   }, [board?.canvasData, canvaFabric]);
 
  
-  useEffect(() => {
+useEffect(() => {
   if (!isUser || !params?.boardId) return;
-  
+
   const boardId = params.boardId as string;
   const currentBoardPath = `/board/${boardId}`;
   let isDeleting = false;
-  
+
   const safeDelete = async () => {
     if (isDeleting) return;
     isDeleting = true;
-    
+
     try {
       await deleteBoardOnLeave(boardId);
     } catch (error) {
       console.log(error);
     }
   };
-  
-  // Handle tab close/refresh - more reliable than beforeunload
-  const handleVisibilityChange = () => {
-    if (document.visibilityState === 'hidden' && window.location.pathname === currentBoardPath) {
-      safeDelete();
-    }
-  };
-  
-  // Backup: Handle beforeunload
-  const handleBeforeUnload = () => {
+
+  // Only handle beforeunload (page refresh/close) and route changes
+  const handleBeforeUnload = (e: BeforeUnloadEvent) => {
     if (window.location.pathname === currentBoardPath) {
       safeDelete();
     }
   };
-  
-  document.addEventListener('visibilitychange', handleVisibilityChange);
+
+  // Handle route changes (navigation to different pages)
+  const handleRouteChange = () => {
+    const currentPath = window.location.pathname;
+    if (currentPath !== currentBoardPath && !isDeleting) {
+      safeDelete();
+    }
+  };
+
+  // Add event listeners
   window.addEventListener('beforeunload', handleBeforeUnload);
-  
+  window.addEventListener('popstate', handleRouteChange);
+
+  // For Next.js router events (if you're using Next.js)
+  // You might want to add router.events.on('routeChangeStart', handleRouteChange)
+
   return () => {
-    document.removeEventListener('visibilitychange', handleVisibilityChange);
     window.removeEventListener('beforeunload', handleBeforeUnload);
-    
+    window.removeEventListener('popstate', handleRouteChange);
+
     // Only delete if navigating away from this board
     const currentPath = window.location.pathname;
     if (currentPath !== currentBoardPath && !isDeleting) {

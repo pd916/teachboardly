@@ -26,6 +26,7 @@ const eventHandlers: Record<string, (eventData: any) => Promise<void>> = {
         data: {
           paddleSubscriptionId: subscriptionId,
           status: "ACTIVE",
+          trialEndsAt: new Date(),
            currentPeriodStart: currentBillingPeriod?.startsAt 
             ? new Date(currentBillingPeriod.startsAt) 
             : new Date(), // fallback to now

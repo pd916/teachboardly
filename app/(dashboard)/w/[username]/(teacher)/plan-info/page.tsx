@@ -1,9 +1,19 @@
+import { getSelf } from '@/lib/auth-service';
+import { getUserSubscriptionStatus } from '@/lib/get-user-subscribtion';
 import React from 'react'
+import PlanUsage from '../_component/plan-usage';
 
-const page = () => {
+const page = async () => {
+  const self = await getSelf()
+
+    if(!self) return;
+
+    const {data: subscriptionData } = await getUserSubscriptionStatus(self.id);
   return (
     <div>
-      Plan-nfo
+      <PlanUsage
+       subscription={subscriptionData}
+      />
     </div>
   )
 }

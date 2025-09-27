@@ -16,11 +16,11 @@ export const createBoard = async (values: Partial<Board>) => {
         redirect("/sign-in");
     }
 
-    const userSubscriptionStatus = self.subscription?.[0]
+    const userSubscriptionStatus = self.subscription
 
-    if(userSubscriptionStatus.status === "TRIALING") {
+    if(userSubscriptionStatus?.status === "TRIALING") {
     const now = new Date();
-    if (new Date(userSubscriptionStatus.trialEndsAt) < now) {
+    if (new Date(userSubscriptionStatus?.trialEndsAt ) < now) {
         // Trial expired
         await db.subscription.update({
             where: { id: userSubscriptionStatus.id },
@@ -60,7 +60,7 @@ export const savedBoard = async (boardId:string, canvasData: any) => {
 
     const boardCount = await getBoardCountByUser(self?.id!);
 
-    const subscription = self.subscription?.[0]
+    const subscription = self.subscription
 
     const isProPlan =  subscription?.status === "ACTIVE";;
 
@@ -68,7 +68,7 @@ export const savedBoard = async (boardId:string, canvasData: any) => {
             throw new Error("Saved Board limit reached.");
         }
 
-    if(subscription.status === "TRIALING"){
+    if(subscription?.status === "TRIALING"){
         throw new Error("Free plan users cannot save boards. Upgrade to Pro.");
     }
         
@@ -115,7 +115,7 @@ export const deleteBoardOnLeave = async (boardId:string) => {
 
   if(!self) throw new Error("Someting wnet wrong");
 
-  const subscription = self?.subscription?.[0]
+  const subscription = self?.subscription
 
   const existingBoard = await db.board.findUnique({
     where:{
@@ -129,7 +129,7 @@ export const deleteBoardOnLeave = async (boardId:string) => {
 
   if(!existingBoard) return;
 
-   const isPro = subscription.status === 'ACTIVE';
+   const isPro = subscription?.status === 'ACTIVE';
 
    if (isPro && existingBoard.isArchived) {
     return;

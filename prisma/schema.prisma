@@ -5,7 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  directUrl = env("DATABASE_DIRECT_URL")
+  // directUrl = env("DATABASE_DIRECT_URL")
 }
 
 model User {
@@ -19,7 +19,7 @@ model User {
   updatedAt DateTime    @updatedAt
   board     Board[]
   recording Recording[]
-  subscription Subscription[]
+  subscription Subscription?
 }
 
 model Board {
@@ -56,7 +56,7 @@ model Recording {
 model Subscription {
   id                String               @id @default(uuid())
   user              User                 @relation(fields: [userId], references: [id])
-  userId            String
+  userId            String               @unique
   paddleSubscriptionId String?           @unique
   status            SubscriptionStatus   @default(TRIALING)
   trialEndsAt       DateTime
@@ -65,8 +65,6 @@ model Subscription {
   cancelAtPeriodEnd Boolean               @default(false)
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
-
- @@index([userId])
 }
 
 enum SubscriptionStatus {

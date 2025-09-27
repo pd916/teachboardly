@@ -1,4 +1,5 @@
 "use client"
+import { deleteBoardOnLeave } from '@/actions/board';
 import { useBoardPresence } from '@/components/provider/provider';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
@@ -18,13 +19,15 @@ const Navabr = ({
 
    const { endSession} = useBoardPresence(boardId, { id: hostId!, name:hostname, boardId })
 
-const handleEndSession = () => {
+   const router = useRouter();
+   
+const handleEndSession = async () => {
   endSession()
-  router.push(`/dashboard/${hostname}`) // host redirect
+  router.push(`/w/${hostname}`) // host redirect
+  await deleteBoardOnLeave(boardId as string)
 }
 
 
-   const router = useRouter();
 
         return (
             <div className='min-h-14 flex items-center justify-between'>
