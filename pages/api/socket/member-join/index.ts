@@ -37,11 +37,11 @@ export default async function handler(req: NextApiRequest, res:NextApiResponse )
       return res.status(404).json({ error: "Board not found" });
     }
     
-    const ownerPlan = existingBoard.user.subscription?.[0]
+    const ownerPlan = existingBoard.user.subscription
     console.log(existingBoard, ownerPlan, value.link, "member-joiningg")
 
   
-  if(ownerPlan.status === "TRIALING" && members.length >= 5){
+  if(ownerPlan?.status === "TRIALING" && members.length >= 5){
     return res.status(404).json({ error: "Sorry you can't join the board host didn't upgraded to pro plan" });
   }
 
