@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     const existingSubscription = await db.subscription.findFirst({
       where: {
         userId: self.id,
-        status: { in: ["ACTIVE"] },
+        status: { in: ["ACTIVE", "TRIALING"] },
       },
       select: { id: true },
     });
@@ -46,6 +46,28 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    const oneMinuteAgo = new Date(Date.now() - 60000);
+    const recentAttempts = await db.paymentAttempt.count({
+      where: {
+        userId: self.id,
+        createdAt: { gte: oneMinuteAgo }
+      }
+    });
+
+    if (recentAttempts >= 3) {
+      return NextResponse.json(
+        { error: "Too many payment attempts. Please wait a minute." }, 
+        { status: 429 }
+      );
+    }
+
+    await db.paymentAttempt.create({
+      data: {
+        userId: self.id,
+        createdAt: new Date()
+      }
+    });
 
     // Create Paddle transaction (catalog price by priceId)
     const transactionData = {

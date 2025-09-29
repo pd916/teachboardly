@@ -19,6 +19,7 @@ model User {
   updatedAt DateTime    @updatedAt
   board     Board[]
   recording Recording[]
+  paymentAttempts PaymentAttempt[]
   subscription Subscription?
 }
 
@@ -65,6 +66,27 @@ model Subscription {
   cancelAtPeriodEnd Boolean               @default(false)
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
+}
+
+model WebhookEvent {
+  id            String   @id @default(cuid())
+  paddleEventId String   @unique  // Paddle's event.id
+  eventType     String
+  payload       String   @db.Text
+  processedAt   DateTime @default(now())
+
+  @@index([paddleEventId])
+  @@index([processedAt])
+}
+
+model PaymentAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 enum SubscriptionStatus {

@@ -103,8 +103,44 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
+    const eventId = eventData.eventId || eventData.id || eventData.event_id;
+    
+    if (!eventId) {
+      console.error("No event ID found in webhook payload");
+      return NextResponse.json({ error: "Invalid event" }, { status: 400 });
+    }
+
+     const alreadyProcessed = await db.webhookEvent.findUnique({
+      where: { paddleEventId: eventId }
+    });
+    
+    if (alreadyProcessed) {
+      console.log(`Webhook ${eventData.eventId} already processed, skipping`);
+      return NextResponse.json({ received: true });
+    }
+
     const handler = eventHandlers[eventData.eventType as keyof typeof eventHandlers];
-    if (handler) await handler(eventData);
+    if (handler) {
+      try {
+        await handler(eventData);
+      } catch (handlerError: any) {
+        console.error(`Handler failed for ${eventData.eventType}:`, {
+          error: handlerError.message,
+          stack: handlerError.stack,
+          eventId,
+        });
+        // Continue to mark as processed to avoid infinite retries
+      }
+    }
+
+    await db.webhookEvent.create({
+      data: {
+        paddleEventId: eventData.eventId,
+        eventType: eventData.eventType,
+        processedAt: new Date(),
+        payload: JSON.stringify(eventData)
+      }
+    });
 
     return NextResponse.json({ received: true });
   } catch (error: any) {
