@@ -23,7 +23,6 @@ export const authOptions: NextAuthOptions = {
                     }
               },
               async authorize(credentials:any): Promise<any> {
-                console.log(credentials, "credentials")
                 // await dbConnect()
                 try {
                     const user = await  db.user.findFirst({
@@ -42,7 +41,6 @@ export const authOptions: NextAuthOptions = {
                     }
                     })
 
-                    console.log(user, "usss")
 
                     if(!user) {
                         throw new Error("No user Found with this email")

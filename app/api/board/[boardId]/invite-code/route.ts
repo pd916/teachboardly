@@ -28,7 +28,6 @@ export async function PATCH(req:Request, {params}:{ params: Promise<{ boardId: s
 
         return NextResponse.json(board);
     } catch (error) {
-        console.log(error)
         return NextResponse.json("Something wnet wrong", {status: 500})
     }
 }

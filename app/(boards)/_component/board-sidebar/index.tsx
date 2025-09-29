@@ -15,7 +15,7 @@ interface BoardItemProps {
 }
 
 const BoardSidebar = ({board}:BoardItemProps) => {
-  console.log(board, "board")
+
     const {onOpen} = useModelStore((state) => state);
   return (
     <div className="w-18 lg:border bg-white text-black min-h-screen fixed p-4">

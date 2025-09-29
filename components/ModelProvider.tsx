@@ -15,7 +15,6 @@ export const ModalProvider = () => {
     const [isMounted, setIsMounted] = useState(false)
 
     useEffect(() => {
-        console.log("🔹 ModalProvider Mounted");
         setIsMounted(true)
     },[])
 

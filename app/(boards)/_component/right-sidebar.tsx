@@ -25,9 +25,7 @@ const RightSidebar = ({boardId}:RightSidebarProps) => {
       identity,
       hostIdentity
     } = useViewerToken({boardId})
-    console.log(token, name, identity, "Sess")
 
-    // console.log(token, name, identity, "idit")
     // const hostIdentity = `host-${session?.user?.id}`
      if(!token || !name || !identity || !hostIdentity) {
         return <p>Something went worng</p>
@@ -113,7 +111,6 @@ const ParticipantsSection = ({
   }, [participants, hostIdentity, excludeSelf, localParticipant?.identity]);
   
 
-  console.log("All participants:", list);
 
   return (
     <div className="h-full flex flex-col min-h-0">

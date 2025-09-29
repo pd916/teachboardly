@@ -17,7 +17,7 @@ export const Video = ({
   className
 }: TeacherVideoProps) => {
   const { localParticipant } = useLocalParticipant()
-  console.log(localParticipant.identity, "local")
+ 
 
  if (!localParticipant) {
     return (
@@ -47,7 +47,6 @@ export const Video = ({
 const HostVideoTrack = ({ className }: { className?: string }) => {
   const tracks = useTracks([Track.Source.Camera]);
   const localTrack = tracks.find(track => track.participant.isLocal);
-  console.log(localTrack, "tracksss")
 
   if (!localTrack) {
     return (

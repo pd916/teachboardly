@@ -36,7 +36,6 @@ const eventHandlers: Record<string, (eventData: any) => Promise<void>> = {
           cancelAtPeriodEnd: false,
         },
       });
-      console.log(`Upgraded trial → active for user ${userId}`);
     } else {
       // fallback: create if no trial record exists
       await db.subscription.create({
@@ -53,7 +52,6 @@ const eventHandlers: Record<string, (eventData: any) => Promise<void>> = {
             : null,
         },
       });
-      console.log(`Created new active subscription for user ${userId}`);
     }
   },
 

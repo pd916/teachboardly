@@ -17,7 +17,6 @@ import { useModelStore } from "@/hooks/use-model";
 
 export const InviteBoardModel = () => {
     const {onOpen, isOpen, onClose, type, data} = useModelStore()
-    console.log(type, data, "data")
     const isModalOpen = isOpen && type === "InviteCode" 
     const inviteUrl = data.board?.inviteCode;
     const boardId = data?.board?.id;

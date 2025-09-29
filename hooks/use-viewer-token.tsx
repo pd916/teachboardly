@@ -14,7 +14,7 @@ export const useViewerToken = ({boardId}:UseViewerTokenProps) => {
     const [identity, setIdentity] = useState('');
     const [hostIdentity, setHostIdentity] = useState<string>("");
     const {currentGuest} = useGuestStore((state) => state);
-    console.log(identity, name, currentGuest, "iiidt")
+    
 
     useEffect(() => {
         if (!boardId) return;

@@ -41,7 +41,6 @@ const UserAvatar = ({
     imageUrl,
 }:UserAvatarProps) => {
     // const canShowBadge = showBadge && isLive;
-    console.log(imageUrl ,"workingsssss")
     const {onOpen} = useModelStore((state) => state);
 
   return (

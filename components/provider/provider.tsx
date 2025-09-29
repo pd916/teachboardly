@@ -67,7 +67,6 @@ export function useBoardPresence(
 
         // If I’m the one kicked → redirect
         if (profile?.id === kickedMemberId) {
-          console.log("You were kicked, redirecting…")
           router.push("/")
         }
       })
@@ -76,7 +75,6 @@ export function useBoardPresence(
     channel.on("broadcast", { event: "can-draw" }, ({ payload }) => {
       const { id, allowed } = payload as { id: string; allowed: boolean }
        if (profile?.id === id) {
-    console.log("Drawing permission:", allowed)
     setIsDrawingEnabled(allowed) // <-- update local state or Zustand
   }
     })
@@ -129,8 +127,6 @@ export function useBoardPresence(
     const channel = channelRef.current
     if (!id || !channel) return
 
-    console.log("Broadcasting kick for:", id)
-
     channel.send({
     type: "broadcast",
     event: "member-kicked",
@@ -150,8 +146,6 @@ export function useBoardPresence(
   const endSession = () => {
   const channel = channelRef.current
   if (!channel) return
-
-  console.log("Broadcasting end-session for board:", boardId)
 
   channel.send({
     type: "broadcast",

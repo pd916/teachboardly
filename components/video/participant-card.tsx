@@ -18,7 +18,6 @@ const ParticipantVideoTrack = ({ participant, className }: { participant: Partic
     track.participant.identity === participant.identity && 
       track.source === Track.Source.Camera);
 
-  console.log( tracks.map((track) => track.participant.identity),  participant.identity, participantTrack, "parti")
 
   if (!participantTrack || !participant.isCameraEnabled) {
     return (

@@ -368,7 +368,6 @@ if (shape === "ruler" || shape === "protracter") {
   return;
 }
 
-    console.log(selectedShapeRef.current, target, pointer, "penss")
 
     canvas.isDrawingMode = false
 
@@ -525,7 +524,7 @@ export const handleCanvasMouseMove = ({
 
   // sync shape in storage
   if (shapeRef.current) {
-    console.log(shapeRef.current, "current")
+    
      if (!shapeRef.current.objectId) {
     shapeRef.current.objectId = shapeRef.current.id; // or generate UUID
   }
@@ -603,7 +602,7 @@ export const handleCanvasObjectModified = ({
   syncShapeInStorage,
 }: CanvasObjectModified) => {
   const target = options.target;
-  console.log(target, "target")
+  
   if (!target) return;
 
   if (target?.type == "activeSelection") {

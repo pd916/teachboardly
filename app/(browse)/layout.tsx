@@ -8,7 +8,6 @@ import { authOptions } from "../api/auth/[...nextauth]/options"
 const BrowseLayout = async ({children}:{children: React.ReactNode}) => {
      const session = await getServerSession(authOptions)
 
-     console.log(session, "workinggsly")
 
      const user = session?.user
 

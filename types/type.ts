@@ -22,7 +22,7 @@ export type BottombarProps = {
   activeElement: ActiveElement;
   imageInputRef?: React.MutableRefObject<HTMLInputElement | null>;
   isUser?: LiteUser;
-  userplan?: "TRIALING" | "ACTIVE" | "EXPIRED" | "CANCELED";
+  userplan: "TRIALING" | "ACTIVE" | "EXPIRED" | "CANCELED";
   handleImageUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleActiveElement?: (element: ActiveElement) => void;
   elementAttributes: Attributes;
@@ -31,7 +31,7 @@ export type BottombarProps = {
   activeObjectRef: React.RefObject<FabricObject | null>;
   isEditingRef: React.MutableRefObject<boolean | null>;
   syncShapeInStorage: (obj: any) => void;
-  canvasRef: React.RefObject<HTMLCanvasElement | null>;
+  canvasRef: React.RefObject<HTMLDivElement | null>;
   boardId: string | string[] | undefined;
 };
 

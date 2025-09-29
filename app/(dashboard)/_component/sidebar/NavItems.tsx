@@ -21,7 +21,6 @@ const NavItems = ({
     isActive,
     href
 }: NavItemsProps) => {
-  console.log(isActive, "Active")
   return (
     <Button
     asChild

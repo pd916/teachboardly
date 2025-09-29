@@ -13,7 +13,7 @@ type UpdateUserInput = Partial<User> & { publicId?: string };
 
 
 export  const updateUser = async (values: UpdateUserInput) => {
-    console.log(values, "backend vlauess")
+
         const self = await getSelf();
 
         // const valiData = {
@@ -39,9 +39,7 @@ export  const updateUser = async (values: UpdateUserInput) => {
 
         if (values.imageUrl && values.imageUrl.includes('cloudinary')) {
         const imagePublicId = values.imageUrl.split('/').pop()?.split('.')[0];
-        
-        console.log('Extracted publicId from NEW image:', imagePublicId);
-        console.log('New image URL:', values.imageUrl);
+      
         
         if (imagePublicId) {
             await deleteFromCloudinary(imagePublicId);

@@ -32,7 +32,6 @@ const Page = () => {
 const { isSubmitting } = form.formState;
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    console.log(data)
     const result = await signIn('credentials', {
       redirect: false,
        email: data.email,

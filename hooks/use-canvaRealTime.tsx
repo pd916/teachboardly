@@ -25,7 +25,6 @@ export function useCanvasRealtime(boardId?: string | string[] | undefined, curre
 
     // Equivalent to socket.on("canva-added", handleCanvaAdded)
     const handleCanvaAdded = (canva: CanvasData) => {
-      console.log(canva)
       const domRef = React.createRef<HTMLCanvasElement>()
       const fabricRef = React.createRef<any>()
       const shapeRef = { current: null } as React.RefObject<any>
@@ -50,13 +49,11 @@ export function useCanvasRealtime(boardId?: string | string[] | undefined, curre
 
     // Equivalent to socket.on("canvas-switched", handleCanvasSwitched)
     const handleCanvasSwitched = ({ index }: { index: number }) => {
-      console.log("Switching to index:", index)
       useCanvasStore.setState({ activeIndex: index })
     }
 
     const handleShapeUpdate = (payload: any) => {
       if (payload.senderId === currentUserId) {
-        console.log("⏭️ Skipping own shape update")
         return
       }
 
@@ -138,7 +135,6 @@ export function useCanvasRealtime(boardId?: string | string[] | undefined, curre
                         });
                         
                         existing.clipPath = clipGroup;
-                        console.log("✅ Exact clipPath applied with preserved positions");
                     } else {
                         // Handle other shape types as clipPath
                         fabric.util.enlivenObjects([parsedClipPath])
@@ -166,7 +162,7 @@ export function useCanvasRealtime(boardId?: string | string[] | undefined, curre
 
             existing.setCoords();
             canvas.requestRenderAll();
-            console.log(`✅ Updated existing shape with exact eraser positions`, shape.objectId);
+            
             return;
         }
 
@@ -206,7 +202,7 @@ export function useCanvasRealtime(boardId?: string | string[] | undefined, curre
                 });
 
                 canvas.requestRenderAll();
-                console.log("✅ Added new shape with exact clipPath positions", shape.objectId);
+                
             })
             .catch((err) => {
                 console.error("❌ Failed to enliven new object:", err);

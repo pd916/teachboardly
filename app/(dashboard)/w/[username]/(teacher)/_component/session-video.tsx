@@ -28,7 +28,7 @@ const SessionVideo = ({recentSession}:SessionVideoProps) => {
     );
   }
   return (
-    <div className='flex items-center'>
+    <div className='flex items-center gap-2'>
       {recentSession.map((r) => (
         <RecordingCard
         key={r.id}

@@ -13,7 +13,6 @@ export default async function handler(req: NextApiRequest, res:NextApiResponse )
 
         const {value} = req.body;
 
-        console.log(value, members, "namess")
 
         if (!value.name || !value.link) {
              return res.status(401).json({error: "Unauthorized"});
@@ -38,7 +37,6 @@ export default async function handler(req: NextApiRequest, res:NextApiResponse )
     }
     
     const ownerPlan = existingBoard.user.subscription
-    console.log(existingBoard, ownerPlan, value.link, "member-joiningg")
 
   
   if(ownerPlan?.status === "TRIALING" && members.length >= 5){
@@ -62,9 +60,6 @@ export default async function handler(req: NextApiRequest, res:NextApiResponse )
     })
   }
   
-  console.log(value.name,
-      guestUUID,
-      existingBoard.id, "prooo")
 
   return res.status(200).json({
     board:existingBoard,

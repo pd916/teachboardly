@@ -13,7 +13,6 @@ export function HostTile({ hostIdentity, className }: { hostIdentity: string; cl
     (localParticipant?.identity === hostIdentity ? (localParticipant as unknown as Participant) : undefined)
     
 
-    console.log(host, "hostsss")
 
   return (
     <div className={`bg-black flex items-center justify-center relative ${className}`}>

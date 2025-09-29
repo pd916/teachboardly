@@ -27,7 +27,7 @@ export const getSelf = async () => {
 
 export const getSelfByUsername = async (name: string) => {
      const self = await getSelf()
-     console.log(name, self,"user")
+     
 
      if(!self || !self.name){
          throw new Error("Unauthorized")
@@ -44,7 +44,6 @@ export const getSelfByUsername = async (name: string) => {
      }
  
      if(self?.name !== user.name){
-        console.log(self?.name, user?.name, "work")
          throw new Error("Unauthorize")
      }
  

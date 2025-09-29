@@ -1,6 +1,6 @@
 "use client"
 import {Canvas, Object as FabricObject, } from "fabric";
-import React, { startTransition, useCallback, useEffect, useState } from 'react'
+import React, { startTransition, useCallback, useEffect, useRef, useState } from 'react'
 import { ActiveElement, Attributes } from '@/types/type'
 import { defaultNavElement } from '@/constant'
 import Navabr from '@/app/(boards)/_component/board-navbar'
@@ -54,11 +54,11 @@ const Board = () => {
    const isUser = session?.user;
    const canvaFabric = canvases[activeIndex];
    const userData = userplan?.subscription
+   const mainContainerRef = useRef<HTMLDivElement>(null);
   //  useFreePlanTimer({
   //   boardId:params?.boardId,
   //   user:isUser
   //  })
-   console.log( canvaFabric?.history, canvaFabric?.historyIndex, userData, "pensss")
 
   const [elementAttributes, setElementAttributes] = useState<Attributes>({
     width: '',
@@ -81,7 +81,7 @@ const Board = () => {
     if(!object) return;
     
     const shapeData = object.toJSON();
-    console.log(object, shapeData.objectId, shapeData, "its object")
+  
 
     shapeData.objectId = object.id || object.objectId;
 
@@ -90,7 +90,7 @@ const Board = () => {
                 // Convert clipPath to JSON string to ensure proper transmission
                 const clipPathData = object.clipPath.toJSON ? object.clipPath.toJSON() : object.clipPath;
                 shapeData.clipPath = typeof clipPathData === 'string' ? clipPathData : JSON.stringify(clipPathData);
-                console.log("Syncing object with clipPath:", shapeData.clipPath);
+               
             } catch (clipError) {
                 console.error("Failed to serialize clipPath:", clipError);
                 // Still sync the object even if clipPath fails
@@ -100,7 +100,6 @@ const Board = () => {
 
     emitUpdateShape(shapeData);
 
-  console.log("Shape emitted", shapeData);
   },[emitUpdateShape])
 
   const deleteShapeFromStorage = useCallback((objectId:string) => {
@@ -112,7 +111,6 @@ const Board = () => {
   const handleActiveElement = useCallback ((elem: ActiveElement) =>{
     const { canvases, activeIndex } = useCanvasStore.getState(); // always fresh
   const currentCanvaFabric = canvases[activeIndex];
-    console.log(currentCanvaFabric, canvaFabric, elem, "cominggggggg")
     setActiveElement(elem);
     const canvas = currentCanvaFabric?.fabricRef?.current;
 
@@ -182,7 +180,6 @@ const Board = () => {
   useEffect(() => {
      const currentCanvasFabric = canvases[activeIndex];
       const domRefCurrent = currentCanvasFabric?.domRef.current;
-      console.log('Effect running for canvas', currentCanvasFabric?.id, domRefCurrent);
       if (!domRefCurrent) return;
   
 
@@ -198,7 +195,6 @@ const Board = () => {
         })
     }   
 
-      console.log(canvas, "coming")
       
     canvas?.off();
     
@@ -391,7 +387,7 @@ useEffect(() => {
   if (!canvas) return;
 
   const enable = !!isUser || isDrawingEnabled;
-  console.log(isDrawingEnabled, "able", enable)
+  
 
   // FIXED: Properly handle canvas interaction state
   canvas.selection = enable;
@@ -413,7 +409,6 @@ useEffect(() => {
   // FIXED: Force canvas to refresh its state
   canvas.requestRenderAll();
   
-  console.log("Canvas permissions updated:", { enable, selection: canvas.selection, skipTargetFind: canvas.skipTargetFind });
 
 }, [isUser, isDrawingEnabled, canvaFabric?.fabricRef]);
 
@@ -440,13 +435,13 @@ useEffect(() => {
           <BottomBar
           activeElement={activeElement}
           isUser={session?.user}
-          userplan={userData?.status}
+          userplan={userData?.status!}
           handleActiveElement={handleActiveElement}
           imageInputRef={canvaFabric?.imageInputRef}
           elementAttributes={elementAttributes}
           setElementAttributes={setElementAttributes}
           syncShapeInStorage={syncShapeInStorage}
-          canvasRef={canvaFabric?.domRef}
+          canvasRef={mainContainerRef}
          boardId={params?.boardId}
         canvaFabric={canvaFabric?.fabricRef}
         isEditingRef={canvaFabric?.isEditingRef}

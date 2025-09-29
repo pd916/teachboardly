@@ -25,7 +25,6 @@ export const JoinLinkModel = () => {
     const router = useRouter();
     const {isOpen, onClose, type} = useModelStore()
     const {guests, setCurrentGuest,} = useGuestStore((state) => state)
-    console.log(guests, "gusssst")
    
     const isModalOpen = isOpen && type === "joinLink" 
     const [value, setValue] = useState({
@@ -46,7 +45,6 @@ export const JoinLinkModel = () => {
            }, {skipNull: true});
 
         const res = await axios.post(url, {value})
-        console.log(res, "guests")
         if(res.data){
             const guest = res.data.guest;
             // const board = res.data.board;

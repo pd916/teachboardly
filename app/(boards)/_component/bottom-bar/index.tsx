@@ -28,7 +28,7 @@ const BottomBar = ({
 }:BottombarProps) => {
   const isActive = (value: string | Array<ActiveElement>) => 
     (Array.isArray(value) && value.some((val) => val?.value === activeElement?.value))
-  console.log(userplan, "comeeeee")
+
   
   return (
     <div className="bg-white lg:min-w-4xl lg:ml-20 rounded-lg 
@@ -86,11 +86,15 @@ const BottomBar = ({
         <Recording 
         canvasRef={canvasRef}
         boardId={boardId}
-        isDisabled={userplan !== SubscriptionStatus.ACTIVE}
+        isDisabled={userplan !== "ACTIVE"}
         />
       )}
     </div>
   )
 }
 
-export default memo(BottomBar, (prevProps, nextProps) => prevProps.activeElement === nextProps.activeElement);
+export default memo(BottomBar, (prevProps, nextProps) => 
+  prevProps.activeElement === nextProps.activeElement &&
+    prevProps.userplan === nextProps.userplan
+  );
+

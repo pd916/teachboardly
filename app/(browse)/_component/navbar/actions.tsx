@@ -15,7 +15,6 @@ const Actions = () => {
 
     useEffect(() => {
         const handleProfileUpdate = async () => {
-            console.log("Profile update event received, refreshing session");
             await update();
         };
 
@@ -26,7 +25,6 @@ const Actions = () => {
         };
     }, [update]);
 
-    console.log(user, "user")
   return (
     <div className='flex items-center justify-end gap-x-2 ml-4 lg:ml-0'>
         {!user ? (

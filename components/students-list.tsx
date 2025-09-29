@@ -25,7 +25,6 @@ const StudentsList = ({
 })
 
 const [localAllowed, setLocalAllowed] = useState(false)
-    console.log(params?.boardId, "memb")
 
     const handleDrawingPermissionToggle = (userId: string) => {
       if (!userId) return;

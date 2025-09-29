@@ -33,7 +33,7 @@ const Page = () => {
 const { isSubmitting } = form.formState;
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    console.log(values)
+    
     const res = await axios.post(`${process.env.NEXT_PUBLIC_URL}/api/sign-up`, values)
     if(res.data.success){
       toast.success(res.data.message ||"User register Successfully")

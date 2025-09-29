@@ -12,8 +12,6 @@ type Props = {
 };
 
 export const CanvasLayer = ({ domRef, fabricRef, isUser, isActive, isDrawingEnabled }: Props) => {
-  console.log(isActive, "is active")
-  // alert(`isdrawing: ${isDrawingEnabled}`)
 
   return (
     <div

@@ -26,7 +26,6 @@ const Students = () => {
     const {isOpen, onClose, type} = useModelStore((state) => state);
     const {currentGuest, guests} = useGuestStore((state) => state);
     const isModalOpen = isOpen && type === "Students" 
-    console.log(guests, currentGuest, "working")
 
   return (
     <Dialog open={isModalOpen} onOpenChange={onClose}>

@@ -63,7 +63,6 @@ const [paddle, setPaddle] = useState<Paddle>();
 
         if (paddleInstance) {
           setPaddle(paddleInstance);
-          console.log('Paddle initialized successfully');
         } else {
           throw new Error('Paddle initialization failed');
         }

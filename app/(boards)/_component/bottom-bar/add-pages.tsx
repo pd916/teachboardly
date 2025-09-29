@@ -16,7 +16,7 @@ const AddPages = ({ boardId, isUser}:AddPagesProps) => {
     const {activeIndex, canvases, next, prev} = useCanvasStore((state) => state);
      const {  emitAddCanva, emitSwitchCanvas } = useCanvasRealtime(boardId)
     // const userplan = isUser.subscr
-    console.log(isUser, activeIndex, "subss")
+  
 
    const handlePrev = () => {
     const newIndex = Math.max(0, activeIndex - 1);

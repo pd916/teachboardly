@@ -272,11 +272,11 @@ export const handleImageUpload = ({
   syncShapeInStorage,
 }: ImageUpload) => {
   const reader = new FileReader();
-  console.log(reader.result, FabricImage, "img")
+
 
    reader.onload = async () => {
     try {
-      console.log(reader.result, "Loaded image result");
+      
       const img = await FabricImage.fromURL(reader.result as string, {
         crossOrigin: 'anonymous', // optional, depends on your image source
       });

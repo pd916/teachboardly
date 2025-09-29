@@ -13,10 +13,8 @@ const Live = ({isDrawingEnabled, isUser}:Props) => {
    const canvases = useCanvasStore((state) => state.canvases);
   const activeIndex = useCanvasStore((state) => state.activeIndex);
 
-  console.log(activeIndex, 'activeindex')
 
 if (canvases?.length === 0) return null;
-console.log('Canvas IDs:', canvases.map(c => c.id));
 
 
   return (

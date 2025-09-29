@@ -27,7 +27,6 @@ export const createViewToken = async ({boardId, currentGuest}:createViewTokenPro
   if (!board) {
     throw new Error("Board not found");
   }
-  console.log(board, "bdsss")
     
    const hostIdentity = `host-${board.userId}`;
     const isHost = self?.id === board.userId;
