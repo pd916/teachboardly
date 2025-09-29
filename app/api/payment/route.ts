@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     const existingSubscription = await db.subscription.findFirst({
       where: {
         userId: self.id,
-        status: { in: ["ACTIVE", "TRIALING"] },
+        status: { in: ['ACTIVE'] },
       },
       select: { id: true },
     });
