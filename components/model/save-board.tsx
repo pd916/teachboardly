@@ -41,7 +41,7 @@ export const SaveBoard = () => {
       onClose(); // Close the modal
       router.refresh(); // Optional: refresh dashboard or current page
     } catch (error: any) {
-      toast.error(error.message || "Failed to save the board.");
+      toast.error("Upgrade to Premium plan for saving board");
     } finally {
       setIsLoading(false);
     }

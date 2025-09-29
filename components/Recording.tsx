@@ -20,7 +20,6 @@ const Recording = ({canvasRef, boardId, isDisabled}: RecordingProps) => {
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
     const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
-    alert(isDisabled)
 
   const startRecording = async () => {
     try {
