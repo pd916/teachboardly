@@ -75,13 +75,32 @@ const eventHandlers: Record<string, (eventData: any) => Promise<void>> = {
   },
 
   [EventName.SubscriptionCanceled]: async (eventData: any) => {
-    const { customData, id: subscriptionId } = eventData.data;
+    const { customData, id: subscriptionId, currentBillingPeriod } = eventData.data;
     const userId = customData?.userId;
     if (!userId) return;
 
     await db.subscription.updateMany({
       where: { paddleSubscriptionId: subscriptionId },
-      data: { status: "CANCELED", cancelAtPeriodEnd: true },
+      data: { status: "CANCELED", cancelAtPeriodEnd: true,  
+        currentPeriodEnd: currentBillingPeriod?.endsAt
+          ? new Date(currentBillingPeriod.endsAt)
+          : undefined,
+         },
+    });
+  },
+
+  [EventName.SubscriptionResumed]: async (eventData: any) => {
+    const { customData, id: subscriptionId } = eventData.data;
+    const userId = customData?.userId;
+    if (!userId) return;
+
+    // User reactivated their subscription
+    await db.subscription.updateMany({
+      where: { paddleSubscriptionId: subscriptionId },
+      data: { 
+        status: "ACTIVE",
+        cancelAtPeriodEnd: false,
+      },
     });
   },
 };

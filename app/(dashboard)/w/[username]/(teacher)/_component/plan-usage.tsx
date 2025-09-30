@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +16,9 @@ import {
   X,
   Loader2
 } from 'lucide-react';
+
+import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 // Define types based on your Prisma schema
 type SubscriptionStatus = 'TRIALING' | 'ACTIVE' | 'CANCELED' | 'EXPIRED';
@@ -35,12 +38,15 @@ interface Subscription {
 
 interface PlanUsageProps {
   subscription?: Subscription | null;
-  onCancelSubscription?: () => Promise<void>;
+  onCancelSubscription?: () => Promise<{ success: boolean; error?: string; message?: string }>;
+  onReactivateSubscription?: () => Promise<{ success: boolean; error?: string; message?: string }>;
 }
 
-const PlanUsage: React.FC<PlanUsageProps> = ({ subscription, onCancelSubscription }) => {
+const PlanUsage: React.FC<PlanUsageProps> = ({ subscription, onCancelSubscription, onReactivateSubscription }) => {
   const [currentTime, setCurrentTime] = useState(Date.now());
   const [isLoading, setIsLoading] = useState(false);
+   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   // Update time every minute for real-time countdown
   useEffect(() => {
@@ -51,17 +57,54 @@ const PlanUsage: React.FC<PlanUsageProps> = ({ subscription, onCancelSubscriptio
     return () => clearInterval(timer);
   }, []);
 
-  const handleCancelSubscription = async () => {
+  const handleCancelSubscription = () => {
     if (!onCancelSubscription) return;
     
-    setIsLoading(true);
-    try {
-      await onCancelSubscription();
-    } catch (error) {
-      console.error('Failed to cancel subscription:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    // Confirmation dialog
+    const confirmed = window.confirm(
+      "Are you sure you want to cancel your subscription?\n\n" +
+      "• You'll keep access until the end of your current billing period\n" +
+      "• You can reactivate anytime before it ends\n" +
+      "• No refunds for the current period"
+    );
+
+    if (!confirmed) return;
+
+    startTransition(async () => {
+      try {
+        const result = await onCancelSubscription();
+        
+        if (result.success) {
+          toast.success(result.message || "Subscription scheduled for cancellation");
+          router.refresh();
+        } else {
+          toast.error(result.error || "Failed to cancel subscription");
+        }
+      } catch (error) {
+        console.error('Cancel subscription error:', error);
+        toast.error("An unexpected error occurred");
+      }
+    });
+  };
+
+  const handleReactivateSubscription = () => {
+    if (!onReactivateSubscription) return;
+
+    startTransition(async () => {
+      try {
+        const result = await onReactivateSubscription();
+        
+        if (result.success) {
+          toast.success(result.message || "Subscription reactivated successfully!");
+          router.refresh();
+        } else {
+          toast.error(result.error || "Failed to reactivate subscription");
+        }
+      } catch (error) {
+        console.error('Reactivate subscription error:', error);
+        toast.error("An unexpected error occurred");
+      }
+    });
   };
 
   // Calculate subscription details based on your schema
@@ -386,7 +429,7 @@ const PlanUsage: React.FC<PlanUsageProps> = ({ subscription, onCancelSubscriptio
             )}
             
             {(details.status === 'EXPIRED' || details.status === 'CANCELED') && (
-              <Button className="flex-1" size="lg">
+              <Button className="flex-1" size="lg" onClick={handleReactivateSubscription}>
                 <CreditCard className="w-4 h-4 mr-2" />
                 Reactivate Subscription
               </Button>
