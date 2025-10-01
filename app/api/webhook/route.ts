@@ -103,6 +103,14 @@ const eventHandlers: Record<string, (eventData: any) => Promise<void>> = {
       },
     });
   },
+
+  [EventName.SubscriptionPastDue]: async (eventData) => {
+     // Handle failed payments
+     await db.subscription.updateMany({
+       where: { paddleSubscriptionId: eventData.data.id },
+       data: { status: "EXPIRED" }
+     });
+   }
 };
 
 export async function POST(req: NextRequest) {

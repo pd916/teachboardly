@@ -1,36 +1,37 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect, useTransition } from 'react';
-import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { 
-  Calendar, 
-  CreditCard, 
-  AlertTriangle, 
-  CheckCircle, 
-  Clock, 
+  Card, 
+  CardHeader, 
+  CardTitle, 
+  CardContent 
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import {
   Crown,
+  Clock,
+  Calendar,
+  CheckCircle,
+  AlertTriangle,
   X,
+  CreditCard,
   Loader2
 } from 'lucide-react';
-
-import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
-
-// Define types based on your Prisma schema
-type SubscriptionStatus = 'TRIALING' | 'ACTIVE' | 'CANCELED' | 'EXPIRED';
 
 interface Subscription {
   id: string;
   userId: string;
-  paddleSubscriptionId?: string | null;
-  status: SubscriptionStatus;
+  paddleSubscriptionId: string | null;
+  status: string;
   trialEndsAt: Date;
-  currentPeriodStart?: Date | null;
-  currentPeriodEnd?: Date | null;
+  currentPeriodStart: Date | null;
+  currentPeriodEnd: Date | null;
   cancelAtPeriodEnd: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -42,10 +43,13 @@ interface PlanUsageProps {
   onReactivateSubscription?: () => Promise<{ success: boolean; error?: string; message?: string }>;
 }
 
-const PlanUsage: React.FC<PlanUsageProps> = ({ subscription, onCancelSubscription, onReactivateSubscription }) => {
+const PlanUsage: React.FC<PlanUsageProps> = ({ 
+  subscription, 
+  onCancelSubscription, 
+  onReactivateSubscription 
+}) => {
   const [currentTime, setCurrentTime] = useState(Date.now());
-  const [isLoading, setIsLoading] = useState(false);
-   const [isPending, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
   // Update time every minute for real-time countdown
@@ -263,6 +267,12 @@ const PlanUsage: React.FC<PlanUsageProps> = ({ subscription, onCancelSubscriptio
            onCancelSubscription;
   };
 
+  const shouldShowReactivateButton = () => {
+    return subscription?.cancelAtPeriodEnd && 
+           !details.isExpired &&
+           onReactivateSubscription;
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Main Plan Card */}
@@ -429,9 +439,9 @@ const PlanUsage: React.FC<PlanUsageProps> = ({ subscription, onCancelSubscriptio
             )}
             
             {(details.status === 'EXPIRED' || details.status === 'CANCELED') && (
-              <Button className="flex-1" size="lg" onClick={handleReactivateSubscription}>
+              <Button className="flex-1" size="lg">
                 <CreditCard className="w-4 h-4 mr-2" />
-                Reactivate Subscription
+                Purchase New Subscription
               </Button>
             )}
             
@@ -440,10 +450,10 @@ const PlanUsage: React.FC<PlanUsageProps> = ({ subscription, onCancelSubscriptio
                 variant="outline" 
                 size="lg"
                 onClick={handleCancelSubscription}
-                disabled={isLoading}
+                disabled={isPending}
                 className="border-red-200 text-red-600 hover:bg-red-50"
               >
-                {isLoading ? (
+                {isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Canceling...
@@ -457,23 +467,38 @@ const PlanUsage: React.FC<PlanUsageProps> = ({ subscription, onCancelSubscriptio
               </Button>
             )}
 
-            {subscription?.cancelAtPeriodEnd && (
-              <Button variant="outline" size="lg" className="border-green-200 text-green-600 hover:bg-green-50">
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Reactivate Plan
+            {shouldShowReactivateButton() && (
+              <Button 
+                variant="outline" 
+                size="lg" 
+                onClick={handleReactivateSubscription}
+                disabled={isPending}
+                className="border-green-200 text-green-600 hover:bg-green-50"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Reactivating...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Reactivate Plan
+                  </>
+                )}
               </Button>
             )}
           </div>
 
           {/* Warnings and Notices */}
-          {subscription?.cancelAtPeriodEnd && (
+          {subscription?.cancelAtPeriodEnd && !details.isExpired && (
             <div className="flex items-start gap-3 p-4 bg-orange-50 border border-orange-200 rounded-lg">
               <AlertTriangle className="w-5 h-5 text-orange-500 mt-0.5 flex-shrink-0" />
               <div>
                 <h4 className="font-medium text-orange-800">Subscription Set to Cancel</h4>
                 <p className="text-sm text-orange-700 mt-1">
                   Your subscription will end on {details.exactEndTime && formatExactDateTime(details.exactEndTime)}. 
-                  You can reactivate it anytime before this date.
+                  You can reactivate it anytime before this date to continue auto-renewal.
                 </p>
               </div>
             </div>
