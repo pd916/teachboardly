@@ -47,7 +47,13 @@ const RightSidebar = ({boardId}:RightSidebarProps) => {
                 connect={true}
                 audio={true}
                 video={true}
-                // audioCaptureDefaults ={{ echoCancellation: true, noiseSuppression: true, autoGainControl: true }}
+                options={{
+                audioCaptureDefaults: {
+                  echoCancellation: true,
+                  noiseSuppression: true,
+                  autoGainControl: true,
+                },
+              }}
                 className="relative h-full w-full flex flex-col min-h-0"
             >
                   <div className="border-b p-2 shrink-0">

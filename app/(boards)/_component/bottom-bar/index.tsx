@@ -69,10 +69,12 @@ const BottomBar = ({
         ))}
       </ul>
         {/* <Separator orientation="vertical" className="h-10" /> */}
-        <AddPages
-        boardId={boardId}
-        isUser={userplan}
-        />  
+        {isUser && (
+          <AddPages
+          boardId={boardId}
+          isUser={userplan}
+          />  
+        )}
       <Rightbar 
         elementAttributes={elementAttributes}
         setElementAttributes={setElementAttributes}
