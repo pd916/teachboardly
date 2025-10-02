@@ -14,7 +14,6 @@ export type LiteUser = {
   name: string
   email: string
   image?: string | null
-  plan: string
 }
 
 
