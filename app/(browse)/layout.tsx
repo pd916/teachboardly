@@ -16,7 +16,7 @@ const BrowseLayout = async ({children}:{children: React.ReactNode}) => {
         }
     return (
         <div className="h-full">
-        <Navbar/>
+        <Navbar isAdmin={user?.isAdmin}/>
         <main className="pt-20 min-h-screen">
             {children}
         </main>

@@ -7,7 +7,7 @@ declare module "next-auth" {
             name: string;
             email: string;
             image?: string | null;
-            plan: string;
+            isAdmin: boolean;
         };
     }
 
@@ -16,6 +16,7 @@ declare module "next-auth" {
         name: string;
         email: string;
         imageUrl?: string | null; // ✅ Added imageUrl to User interface
+        isAdmin: boolean;
     }
 }
 
@@ -24,5 +25,6 @@ declare module "next-auth/jwt" {
         _id: string;
         name: string;
         imageUrl?: string | null; // ✅ Added imageUrl to JWT interface
+         isAdmin: boolean;
     }
 }

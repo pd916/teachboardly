@@ -37,7 +37,8 @@ export const authOptions: NextAuthOptions = {
                         name: true,
                         email: true,
                         password: true,
-                        imageUrl: true
+                        imageUrl: true,
+                        isAdmin: true
                     }
                     })
 
@@ -53,7 +54,8 @@ export const authOptions: NextAuthOptions = {
                             id: user.id,
                             name: user.name,
                             email: user.email,
-                            imageUrl: user.imageUrl
+                            imageUrl: user.imageUrl,
+                            isAdmin: user.isAdmin
                         };
                         return userToReturn
                     }else {
@@ -71,6 +73,7 @@ export const authOptions: NextAuthOptions = {
                 token._id = user.id?.toString()
                 token.name = user.name
                 token.imageUrl = user.imageUrl
+                token.isAdmin = user.isAdmin
             }
             if (trigger === "update") {
                 // Fetch fresh user data from database
@@ -80,13 +83,15 @@ export const authOptions: NextAuthOptions = {
                         id: true, 
                         name: true, 
                         email: true, 
-                        imageUrl: true 
+                        imageUrl: true,
+                        isAdmin: true
                     },
                 });
 
                 if (freshUser) {
                     token.name = freshUser.name;
                     token.imageUrl = freshUser.imageUrl;
+                    token.isAdmin = freshUser.isAdmin;
                 }
             }
 
@@ -97,6 +102,7 @@ export const authOptions: NextAuthOptions = {
             (session.user as { id: string }).id = token._id as string;
             session.user.name = token.name as string;
             session.user.image = token.imageUrl as string;
+            session.user.isAdmin = token.isAdmin as boolean; 
             
         
         }
