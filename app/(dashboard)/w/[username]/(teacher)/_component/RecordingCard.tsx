@@ -2,7 +2,6 @@
 import { deleteRecording } from '@/actions/recording'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
-import axios from 'axios'
 import { useRouter } from 'next/navigation'
 import React from 'react'
 import { toast } from 'sonner'
@@ -96,29 +95,6 @@ const RecordingCard = ({
     router.refresh()
   }
 
-  // const generatePDF = async (id:string, videoUrl:string) => {
-  //   try {
-  //     const res = await axios.post('/api/generate-notes', {videoUrl})
-  //     console.log(res, "pdf")
-  //    const blob = new Blob([res.data], { type: 'application/pdf' });
-  //   const url = window.URL.createObjectURL(blob);
-    
-  //   const link = document.createElement('a');
-  //   link.href = url;
-  //   link.download = `lecture-notes-${id}.pdf`;
-  //   document.body.appendChild(link);
-  //   link.click();
-    
-  //   // Cleanup
-  //   document.body.removeChild(link);
-  //   window.URL.revokeObjectURL(url);
-    
-  //   toast.success("PDF downloaded!");
-  //   } catch (error) {
-  //     console.error(error);
-  //   toast.error("Failed to generate notes PDF");
-  //   }
-  // }
 
   return (
     <Card className="w-full max-w-sm rounded-xl bg-gray-100">
@@ -154,12 +130,6 @@ const RecordingCard = ({
           >
           Download Session
         </Button>
-          {/* <Button 
-          variant="outline"
-          onClick={() => generatePDF(id, videoUrl)}
-          >
-          Generate Pdf
-        </Button> */}
       </CardFooter>
     </Card>
   )
