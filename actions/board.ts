@@ -16,7 +16,7 @@ export const createBoard = async (values: Partial<Board>) => {
         redirect("/sign-in");
     }
 
-    const userSubscriptionStatus = self.subscription
+    const userSubscriptionStatus = self.subscription[0]
     const now = new Date();
 
     if(userSubscriptionStatus?.status === "TRIALING") {
@@ -73,7 +73,7 @@ export const savedBoard = async (boardId:string, canvasData: any) => {
 
     const boardCount = await getBoardCountByUser(self?.id!);
 
-    const subscription = self.subscription
+    const subscription = self.subscription[0]
 
     const isProPlan =  subscription?.status === "ACTIVE";;
 
@@ -128,7 +128,7 @@ export const deleteBoardOnLeave = async (boardId:string) => {
 
   if(!self) throw new Error("Someting wnet wrong");
 
-  const subscription = self?.subscription
+  const subscription = self?.subscription[0]
 
   const existingBoard = await db.board.findUnique({
     where:{
