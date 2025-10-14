@@ -11,7 +11,7 @@ export type UserProps = {
   name: string
   email: string | null
   imageUrl: string | null
-  subscription:Subscription | null
+  subscription:Subscription[] | null
 }
 
 export const useCurrentUser = () => {
