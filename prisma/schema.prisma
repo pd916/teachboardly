@@ -20,7 +20,7 @@ model User {
   board     Board[]
   recording Recording[]
   paymentAttempts PaymentAttempt[]
-  subscription Subscription?
+  subscription Subscription[]
 }
 
 model Board {
@@ -57,7 +57,7 @@ model Recording {
 model Subscription {
   id                String               @id @default(uuid())
   user              User                 @relation(fields: [userId], references: [id])
-  userId            String               @unique
+  userId            String               
   paddleSubscriptionId String?           @unique
   status            SubscriptionStatus   @default(TRIALING)
   trialEndsAt       DateTime
@@ -66,6 +66,7 @@ model Subscription {
   cancelAtPeriodEnd Boolean               @default(false)
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
+  @@index([userId])
 }
 
 model WebhookEvent {

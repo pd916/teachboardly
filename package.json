@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^5.1.1",
     "@livekit/components-react": "^2.9.13",
     "@paddle/paddle-js": "^1.4.2",
@@ -28,6 +29,7 @@
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@supabase/supabase-js": "^2.57.4",
+    "assemblyai": "^4.16.1",
     "axios": "^1.10.0",
     "bcrypt": "^6.0.0",
     "class-variance-authority": "^0.7.1",
@@ -45,6 +47,7 @@
     "next-auth": "^4.24.11",
     "next-cloudinary": "^6.16.0",
     "next-themes": "^0.4.6",
+    "pdf-lib": "^1.17.1",
     "query-string": "^9.2.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

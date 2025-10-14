@@ -23,6 +23,7 @@ import {
   CreditCard,
   Loader2
 } from 'lucide-react';
+import Link from 'next/link';
 
 interface Subscription {
   id: string;
@@ -200,6 +201,7 @@ const PlanUsage: React.FC<PlanUsageProps> = ({
   };
 
   const details = getSubscriptionDetails();
+  console.log(details, "working")
 
   const getStatusBadge = () => {
     switch (details.status) {
@@ -262,7 +264,7 @@ const PlanUsage: React.FC<PlanUsageProps> = ({
   };
 
   const shouldShowCancelButton = () => {
-    return (details.status === 'ACTIVE' || details.status === 'TRIAL') && 
+    return details.status === 'ACTIVE' && 
            !subscription?.cancelAtPeriodEnd && 
            onCancelSubscription;
   };
@@ -431,17 +433,34 @@ const PlanUsage: React.FC<PlanUsageProps> = ({
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
-            {details.status === 'FREE' && (
+            {details.status === 'TRIAL' && (
+              <Link href={'/prices'}>
               <Button className="flex-1" size="lg">
                 <Crown className="w-4 h-4 mr-2" />
                 Upgrade to Premium
               </Button>
+              </Link>
             )}
             
             {(details.status === 'EXPIRED' || details.status === 'CANCELED') && (
-              <Button className="flex-1" size="lg">
-                <CreditCard className="w-4 h-4 mr-2" />
-                Purchase New Subscription
+             <Button 
+                variant="outline" 
+                size="lg" 
+                onClick={handleReactivateSubscription}
+                disabled={isPending}
+                className="border-green-200 text-green-600 hover:bg-green-50"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Reactivating...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Reactivate Plan
+                  </>
+                )}
               </Button>
             )}
             

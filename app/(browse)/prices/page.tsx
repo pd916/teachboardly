@@ -128,7 +128,7 @@ const [paddle, setPaddle] = useState<Paddle>();
           theme: 'dark',
           locale: 'en',
           allowLogout: false,
-          successUrl: `${window.location.origin}/?upgrade=success`,
+          successUrl: `${window.location.origin}/success?upgrade=success`,
           // Add customer info for better UX
         },
       });

@@ -13,18 +13,20 @@ const eventHandlers: Record<string, (eventData: any) => Promise<void>> = {
   [EventName.SubscriptionActivated]: async (eventData: any) => {
     const { customData, id: subscriptionId, currentBillingPeriod } = eventData.data;
     const userId = customData?.userId;
-    if (!userId) return;
+    if (!userId || !subscriptionId) return;
 
     // ✅ Update the existing trial subscription for this user
     const existing = await db.subscription.findFirst({
-      where: { userId, status: "TRIALING" },
+      where: {  
+        paddleSubscriptionId: subscriptionId 
+      },
     });
 
     if (existing) {
       await db.subscription.update({
         where: { id: existing.id },
         data: {
-          paddleSubscriptionId: subscriptionId,
+          // paddleSubscriptionId: subscriptionId,
           status: "ACTIVE",
           trialEndsAt: new Date(),
            currentPeriodStart: currentBillingPeriod?.startsAt 
@@ -58,7 +60,7 @@ const eventHandlers: Record<string, (eventData: any) => Promise<void>> = {
   [EventName.SubscriptionUpdated]: async (eventData: any) => {
     const { customData, id: subscriptionId, currentBillingPeriod, scheduledChange } = eventData.data;
     const userId = customData?.userId;
-    if (!userId) return;
+    if (!userId || !subscriptionId) return;
 
     await db.subscription.updateMany({
       where: { paddleSubscriptionId: subscriptionId },
@@ -77,7 +79,7 @@ const eventHandlers: Record<string, (eventData: any) => Promise<void>> = {
   [EventName.SubscriptionCanceled]: async (eventData: any) => {
     const { customData, id: subscriptionId, currentBillingPeriod } = eventData.data;
     const userId = customData?.userId;
-    if (!userId) return;
+    if (!userId || !subscriptionId) return;
 
     await db.subscription.updateMany({
       where: { paddleSubscriptionId: subscriptionId },
@@ -92,7 +94,7 @@ const eventHandlers: Record<string, (eventData: any) => Promise<void>> = {
   [EventName.SubscriptionResumed]: async (eventData: any) => {
     const { customData, id: subscriptionId } = eventData.data;
     const userId = customData?.userId;
-    if (!userId) return;
+    if (!userId || !subscriptionId) return;
 
     // User reactivated their subscription
     await db.subscription.updateMany({
@@ -104,13 +106,32 @@ const eventHandlers: Record<string, (eventData: any) => Promise<void>> = {
     });
   },
 
-  [EventName.SubscriptionPastDue]: async (eventData) => {
-     // Handle failed payments
-     await db.subscription.updateMany({
-       where: { paddleSubscriptionId: eventData.data.id },
-       data: { status: "EXPIRED" }
-     });
-   }
+   [EventName.SubscriptionPastDue]: async (eventData) => {
+    // When payment fails and period actually ends
+    const { id: subscriptionId, currentBillingPeriod } = eventData.data;
+    
+    if(!subscriptionId) return;
+    const subscription = await db.subscription.findFirst({
+      where: { paddleSubscriptionId: subscriptionId }
+    });
+
+    if (subscription && subscription.cancelAtPeriodEnd) {
+      // User canceled and period ended - mark as EXPIRED but keep paddleSubscriptionId
+      await db.subscription.update({
+        where: { id: subscription.id },
+        data: { 
+          status: "EXPIRED",
+          // Keep paddleSubscriptionId for potential reactivation
+        }
+      });
+    } else {
+      // Payment failed - mark as EXPIRED
+      await db.subscription.updateMany({
+        where: { paddleSubscriptionId: subscriptionId },
+        data: { status: "EXPIRED" }
+      });
+    }
+  },
 };
 
 export async function POST(req: NextRequest) {

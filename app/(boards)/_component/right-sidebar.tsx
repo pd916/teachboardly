@@ -10,6 +10,7 @@ import { HostTile } from "./host-tile";
 import { HostControls } from "@/components/video/LiveVideo";
 import { StartAudioOnInteract } from "./startAudio-intract";
 import { useMemo } from "react";
+import { Loader2 } from "lucide-react";
 
 interface RightSidebarProps {
   boardId: string | undefined;
@@ -28,7 +29,12 @@ const RightSidebar = ({boardId}:RightSidebarProps) => {
 
     // const hostIdentity = `host-${session?.user?.id}`
      if(!token || !name || !identity || !hostIdentity) {
-        return <p>Something went worng</p>
+        return(
+          <div className="flex items-center justify-center h-full">
+          <Loader2 className="h-6 w-6 animate-spin text-emerald-500" />
+          <span className="ml-2 text-sm text-gray-500">Loading…</span>
+        </div>
+        )
     }
 
 

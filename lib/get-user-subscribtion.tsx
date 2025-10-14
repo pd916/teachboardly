@@ -8,6 +8,12 @@ export const getUserSubscriptionStatus = async (userId:string | undefined) => {
     const subscription = await db.subscription.findFirst({
       where: {
         userId: userId,
+        OR: [
+           { status: "ACTIVE" },
+        ]
+      },
+       orderBy: {
+        createdAt: "desc", // get the latest one if multiple match
       },
     });
 

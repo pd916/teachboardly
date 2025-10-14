@@ -35,16 +35,55 @@ export async function POST(req: NextRequest) {
     const existingSubscription = await db.subscription.findFirst({
       where: {
         userId: self.id,
-        status: { in: ['ACTIVE'] },
+        status: 'ACTIVE'
       },
-      select: { id: true },
+      orderBy: {
+        createdAt: 'desc'
+      }
     });
 
-    if (existingSubscription) {
+    if (existingSubscription && existingSubscription.status === 'ACTIVE') {
       return NextResponse.json(
         { error: "You already have an active subscription" },
         { status: 400 }
       );
+    }
+
+    const canceledSubscription = await db.subscription.findFirst({
+      where: {
+        userId: self.id,
+        status: 'CANCELED',
+        currentPeriodEnd: {
+          gt: new Date() // Period hasn't ended yet
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+
+     if (canceledSubscription?.paddleSubscriptionId) {
+      try {
+        await paddle.subscriptions.resume(canceledSubscription.paddleSubscriptionId, {
+          effectiveFrom: 'immediately'
+        });
+
+        await db.subscription.update({
+          where: { id: canceledSubscription.id },
+          data: {
+            status: 'ACTIVE',
+            cancelAtPeriodEnd: false
+          }
+        });
+
+        return NextResponse.json({
+          resumed: true,
+          message: "Your subscription has been reactivated"
+        });
+      } catch (resumeError: any) {
+        console.error("Failed to resume subscription:", resumeError);
+        // Fall through to create new transaction
+      }
     }
 
     const oneMinuteAgo = new Date(Date.now() - 60000);

@@ -17,19 +17,32 @@ export const createBoard = async (values: Partial<Board>) => {
     }
 
     const userSubscriptionStatus = self.subscription
+    const now = new Date();
 
     if(userSubscriptionStatus?.status === "TRIALING") {
-    const now = new Date();
     if (new Date(userSubscriptionStatus?.trialEndsAt ) < now) {
         // Trial expired
         await db.subscription.update({
             where: { id: userSubscriptionStatus.id },
             data: { status: "EXPIRED" },
         });
-        redirect("/");
+        throw new Error("Trial expired");
     }
 }
 
+
+if (
+  userSubscriptionStatus?.status === "CANCELED" ||
+  userSubscriptionStatus?.status === "EXPIRED"
+) {
+  // If no period end OR period end already passed → block
+  if (
+    !userSubscriptionStatus.currentPeriodEnd ||
+    new Date(userSubscriptionStatus.currentPeriodEnd) < now
+  ) {
+    throw new Error("Subscription inactive");
+  }
+}
     //  const boardCount = await getBoardCountByUser(self?.id!);
 
     //   const isFreePlan = self?.plan === "free";
@@ -68,7 +81,7 @@ export const savedBoard = async (boardId:string, canvasData: any) => {
             throw new Error("Saved Board limit reached.");
         }
 
-    if(subscription?.status === "TRIALING"){
+    if(subscription?.status === "TRIALING" || subscription?.status === "CANCELED" || subscription?.status === "EXPIRED" ){
         throw new Error("Free plan users cannot save boards. Upgrade to Pro.");
     }
         

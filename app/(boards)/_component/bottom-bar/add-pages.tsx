@@ -30,7 +30,7 @@ const AddPages = ({ boardId, isUser}:AddPagesProps) => {
     const isLast = activeIndex === canvases.length - 1;
 
     if (isLast) {
-      if ((isUser === "TRIALING" || isUser === "EXPIRED") && canvases.length >= 2) {
+      if ((isUser === "TRIALING" || isUser === "EXPIRED" || isUser === "CANCELED") && canvases.length >= 2) {
         toast.error("Upgrade your plan to add more canvases.");
         return;
       }

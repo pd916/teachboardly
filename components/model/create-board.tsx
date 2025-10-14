@@ -59,8 +59,8 @@ const CreateBoard = () => {
                 router.push(`/board/${res.id}`)
                 onClose()
             })
-            .catch(() => {
-                toast.error("Something wnet wrong")
+            .catch((err) => {
+                 toast.error(err.message || "Something went wrong");
             })
         })
         } catch (error) {
