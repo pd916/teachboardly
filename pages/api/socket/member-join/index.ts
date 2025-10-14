@@ -36,7 +36,7 @@ export default async function handler(req: NextApiRequest, res:NextApiResponse )
       return res.status(404).json({ error: "Board not found" });
     }
     
-    const ownerPlan = existingBoard.user.subscription
+    const ownerPlan = existingBoard?.user?.subscription[0]
 
   
   if(ownerPlan?.status === "TRIALING" && members.length >= 5){
