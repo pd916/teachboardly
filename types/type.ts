@@ -21,7 +21,7 @@ export type BottombarProps = {
   activeElement: ActiveElement;
   imageInputRef?: React.MutableRefObject<HTMLInputElement | null>;
   isUser?: LiteUser;
-  userplan: "TRIALING" | "ACTIVE" | "EXPIRED" | "CANCELED";
+  userplan?: "TRIALING" | "ACTIVE" | "EXPIRED" | "CANCELED" | "PAST_DUE";
   handleImageUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleActiveElement?: (element: ActiveElement) => void;
   elementAttributes: Attributes;

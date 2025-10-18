@@ -9,7 +9,7 @@ import { useCanvasRealtime } from '@/hooks/use-canvaRealTime';
 
 export type AddPagesProps = {
   boardId:string | string[] | undefined;
-  isUser?: "TRIALING" | "ACTIVE" | "EXPIRED" | "CANCELED";
+  isUser?: "TRIALING" | "ACTIVE" | "EXPIRED" | "CANCELED" | "PAST_DUE";
 }
 
 const AddPages = ({ boardId, isUser}:AddPagesProps) => {

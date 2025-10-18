@@ -53,7 +53,7 @@ const Board = () => {
   const {data:session} = useSession();
    const isUser = session?.user;
    const canvaFabric = canvases[activeIndex];
-   const userData = userplan?.subscription?.[0]
+   const userData = userplan?.subscription
    const mainContainerRef = useRef<HTMLDivElement>(null);
   //  useFreePlanTimer({
   //   boardId:params?.boardId,

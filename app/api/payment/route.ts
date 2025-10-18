@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   try {
     // Auth
     const self = await getSelf();
-    if (!self?.id) {
+    if (!self?.id || !self?.email) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
@@ -32,44 +32,31 @@ export async function POST(req: NextRequest) {
     }
 
     // Prevent duplicate active subscription
-    const existingSubscription = await db.subscription.findFirst({
+    const existingSubscription = await db.subscription.findUnique({
       where: {
         userId: self.id,
-        status: 'ACTIVE'
       },
-      orderBy: {
-        createdAt: 'desc'
-      }
     });
 
-    if (existingSubscription && existingSubscription.status === 'ACTIVE') {
+    if (existingSubscription?.status === 'ACTIVE') {
       return NextResponse.json(
         { error: "You already have an active subscription" },
         { status: 400 }
       );
     }
 
-    const canceledSubscription = await db.subscription.findFirst({
-      where: {
-        userId: self.id,
-        status: 'CANCELED',
-        currentPeriodEnd: {
-          gt: new Date() // Period hasn't ended yet
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
 
-     if (canceledSubscription?.paddleSubscriptionId) {
+     if (existingSubscription?.status === 'CANCELED' &&
+      existingSubscription?.paddleSubscriptionId &&
+      existingSubscription?.currentPeriodEnd &&
+      existingSubscription.currentPeriodEnd > new Date()) {
       try {
-        await paddle.subscriptions.resume(canceledSubscription.paddleSubscriptionId, {
+        await paddle.subscriptions.resume(existingSubscription?.paddleSubscriptionId, {
           effectiveFrom: 'immediately'
         });
 
         await db.subscription.update({
-          where: { id: canceledSubscription.id },
+          where: {userId: self.id },
           data: {
             status: 'ACTIVE',
             cancelAtPeriodEnd: false

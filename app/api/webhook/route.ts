@@ -10,189 +10,221 @@ const paddle = PADDLE_SECRET_TOKEN
   : null;
 
 const eventHandlers: Record<string, (eventData: any) => Promise<void>> = {
-  [EventName.SubscriptionActivated]: async (eventData: any) => {
+ [EventName.SubscriptionActivated]: async (eventData: any) => {
     const { customData, id: subscriptionId, currentBillingPeriod } = eventData.data;
     const userId = customData?.userId;
-    if (!userId || !subscriptionId) return;
 
-    // ✅ Update the existing trial subscription for this user
-    const existing = await db.subscription.findFirst({
-      where: {  
-        paddleSubscriptionId: subscriptionId 
-      },
-    });
+    if (!userId || !subscriptionId) {
+      throw new Error(`Missing required fields: userId=${userId}, subId=${subscriptionId}`);
+    }
 
-    if (existing) {
-      await db.subscription.update({
-        where: { id: existing.id },
-        data: {
-          // paddleSubscriptionId: subscriptionId,
-          status: "ACTIVE",
-          trialEndsAt: new Date(),
-           currentPeriodStart: currentBillingPeriod?.startsAt 
-            ? new Date(currentBillingPeriod.startsAt) 
-            : new Date(), // fallback to now
-          currentPeriodEnd: currentBillingPeriod?.endsAt
-            ? new Date(currentBillingPeriod.endsAt)
-            : null,
-          cancelAtPeriodEnd: false,
-        },
+    await db.$transaction(async (tx) => {
+      const existing = await tx.subscription.findUnique({
+        where: { userId },
       });
-    } else {
-      // fallback: create if no trial record exists
-      await db.subscription.create({
-        data: {
-          userId,
-          paddleSubscriptionId: subscriptionId,
-          status: "ACTIVE",
-          trialEndsAt: new Date(),
-          currentPeriodStart: currentBillingPeriod?.startsAt 
-            ? new Date(currentBillingPeriod.startsAt) 
-            : new Date(),
-          currentPeriodEnd: currentBillingPeriod?.endsAt
-            ? new Date(currentBillingPeriod.endsAt)
-            : null,
-        },
+
+      const data = {
+        paddleSubscriptionId: subscriptionId,
+        status: "ACTIVE" as const,
+        trialEndsAt: new Date(),
+        currentPeriodStart: currentBillingPeriod?.startsAt 
+          ? new Date(currentBillingPeriod.startsAt) 
+          : new Date(),
+        currentPeriodEnd: currentBillingPeriod?.endsAt
+          ? new Date(currentBillingPeriod.endsAt)
+          : null,
+        cancelAtPeriodEnd: false,
+      };
+
+      if (existing) {
+        await tx.subscription.update({
+          where: { id: existing.id },
+          data,
+        });
+      } else {
+        await tx.subscription.create({
+          data: {
+            user: { connect: { id: userId } }, // ✅ connect relation instead of userId
+            ...data,
+          },
+        });
+      }
+    });
+  },
+
+  [EventName.SubscriptionUpdated]: async (eventData: any) => {
+    const { id: subscriptionId, currentBillingPeriod, scheduledChange } = eventData.data;
+
+    if (!subscriptionId) {
+      throw new Error(`Missing subscriptionId`);
+    }
+
+    const data: any = {};
+    
+    if (currentBillingPeriod?.startsAt) {
+      data.currentPeriodStart = new Date(currentBillingPeriod.startsAt);
+    }
+    if (currentBillingPeriod?.endsAt) {
+      data.currentPeriodEnd = new Date(currentBillingPeriod.endsAt);
+    }
+    if (scheduledChange) {
+      data.cancelAtPeriodEnd = scheduledChange.action === "cancel";
+    }
+
+    if (Object.keys(data).length > 0) {
+      await db.subscription.updateMany({
+        where: { paddleSubscriptionId: subscriptionId },
+        data,
       });
     }
   },
 
-  [EventName.SubscriptionUpdated]: async (eventData: any) => {
-    const { customData, id: subscriptionId, currentBillingPeriod, scheduledChange } = eventData.data;
-    const userId = customData?.userId;
-    if (!userId || !subscriptionId) return;
+  [EventName.SubscriptionCanceled]: async (eventData: any) => {
+    const { id: subscriptionId, currentBillingPeriod } = eventData.data;
+
+    if (!subscriptionId) {
+      throw new Error(`Missing subscriptionId`);
+    }
 
     await db.subscription.updateMany({
       where: { paddleSubscriptionId: subscriptionId },
       data: {
-        currentPeriodStart: currentBillingPeriod?.startsAt
-          ? new Date(currentBillingPeriod.startsAt)
-          : null, // don't overwrite if not provided
-        currentPeriodEnd: currentBillingPeriod?.endsAt
-          ? new Date(currentBillingPeriod.endsAt)
-          : null,
-        cancelAtPeriodEnd: scheduledChange?.action === "cancel",
-      },
-    });
-  },
-
-  [EventName.SubscriptionCanceled]: async (eventData: any) => {
-    const { customData, id: subscriptionId, currentBillingPeriod } = eventData.data;
-    const userId = customData?.userId;
-    if (!userId || !subscriptionId) return;
-
-    await db.subscription.updateMany({
-      where: { paddleSubscriptionId: subscriptionId },
-      data: { status: "CANCELED", cancelAtPeriodEnd: true,  
+        status: "CANCELED",
+        cancelAtPeriodEnd: true,
         currentPeriodEnd: currentBillingPeriod?.endsAt
           ? new Date(currentBillingPeriod.endsAt)
           : undefined,
-         },
-    });
-  },
-
-  [EventName.SubscriptionResumed]: async (eventData: any) => {
-    const { customData, id: subscriptionId } = eventData.data;
-    const userId = customData?.userId;
-    if (!userId || !subscriptionId) return;
-
-    // User reactivated their subscription
-    await db.subscription.updateMany({
-      where: { paddleSubscriptionId: subscriptionId },
-      data: { 
-        status: "ACTIVE",
-        cancelAtPeriodEnd: false,
       },
     });
   },
 
-   [EventName.SubscriptionPastDue]: async (eventData) => {
-    // When payment fails and period actually ends
+
+  [EventName.SubscriptionResumed]: async (eventData: any) => {
     const { id: subscriptionId, currentBillingPeriod } = eventData.data;
-    
-    if(!subscriptionId) return;
+
+    if (!subscriptionId) {
+      throw new Error(`Missing subscriptionId`);
+    }
+
+    await db.subscription.updateMany({
+      where: { paddleSubscriptionId: subscriptionId },
+      data: {
+        status: "ACTIVE",
+        cancelAtPeriodEnd: false,
+        currentPeriodStart: currentBillingPeriod?.startsAt
+          ? new Date(currentBillingPeriod.startsAt)
+          : undefined,
+        currentPeriodEnd: currentBillingPeriod?.endsAt
+          ? new Date(currentBillingPeriod.endsAt)
+          : undefined,
+      },
+    });
+  },
+
+   [EventName.SubscriptionPastDue]: async (eventData: any) => {
+    const { id: subscriptionId } = eventData.data;
+
+    if (!subscriptionId) {
+      throw new Error(`Missing subscriptionId`);
+    }
+
     const subscription = await db.subscription.findFirst({
       where: { paddleSubscriptionId: subscriptionId }
     });
 
-    if (subscription && subscription.cancelAtPeriodEnd) {
-      // User canceled and period ended - mark as EXPIRED but keep paddleSubscriptionId
+    if (subscription) {
       await db.subscription.update({
         where: { id: subscription.id },
-        data: { 
-          status: "EXPIRED",
-          // Keep paddleSubscriptionId for potential reactivation
-        }
-      });
-    } else {
-      // Payment failed - mark as EXPIRED
-      await db.subscription.updateMany({
-        where: { paddleSubscriptionId: subscriptionId },
-        data: { status: "EXPIRED" }
+        data: {
+          status: subscription.cancelAtPeriodEnd ? "EXPIRED" : "PAST_DUE",
+        },
       });
     }
   },
 };
 
 export async function POST(req: NextRequest) {
+  const startTime = Date.now();
+  
   try {
-    if (!paddle || !WEBHOOK_SECRET_KEY) {
-      return NextResponse.json({ error: "Server misconfiguration" }, { status: 500 });
-    }
-
+    // 1. Verify signature
     const signature = req.headers.get("paddle-signature");
-    if (!signature) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!signature) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const rawBody = await req.text();
     let eventData: any;
+
     try {
-      eventData = await paddle.webhooks.unmarshal(rawBody, WEBHOOK_SECRET_KEY, signature);
-    } catch {
+      eventData = paddle?.webhooks.unmarshal(rawBody, WEBHOOK_SECRET_KEY!, signature);
+    } catch (err: any) {
+      console.error("Signature verification failed:", err.message);
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
-    const eventId = eventData.eventId || eventData.id || eventData.event_id;
-    
+    const eventId = eventData.eventId;
     if (!eventId) {
-      console.error("No event ID found in webhook payload");
-      return NextResponse.json({ error: "Invalid event" }, { status: 400 });
+      return NextResponse.json({ error: "Missing event ID" }, { status: 400 });
     }
 
-     const alreadyProcessed = await db.webhookEvent.findUnique({
+    // 2. Check idempotency
+    const existing = await db.webhookEvent.findUnique({
       where: { paddleEventId: eventId }
     });
-    
-    if (alreadyProcessed) {
-      console.log(`Webhook ${eventData.eventId} already processed, skipping`);
-      return NextResponse.json({ received: true });
+
+    if (existing) {
+      return NextResponse.json({ received: true, duplicate: true });
     }
 
-    const handler = eventHandlers[eventData.eventType as keyof typeof eventHandlers];
+    // 3. Process event
+    const handler = eventHandlers[eventData.eventType];
+    let error: string | null = null;
+
     if (handler) {
       try {
         await handler(eventData);
-      } catch (handlerError: any) {
-        console.error(`Handler failed for ${eventData.eventType}:`, {
-          error: handlerError.message,
-          stack: handlerError.stack,
+      } catch (err: any) {
+        error = err.message;
+        console.error(`Handler failed [${eventData.eventType}]:`, {
           eventId,
+          error: err.message,
+          stack: err.stack,
         });
-        // Continue to mark as processed to avoid infinite retries
+
+        // Return 500 for critical events to trigger retry
+        const critical = [
+          EventName.SubscriptionActivated,
+          EventName.SubscriptionCanceled,
+          EventName.SubscriptionResumed,
+        ];
+
+        if (critical.includes(eventData.eventType)) {
+          return NextResponse.json({ error: "Processing failed" }, { status: 500 });
+        }
       }
     }
 
+    // 4. Mark as processed
     await db.webhookEvent.create({
       data: {
-        paddleEventId: eventData.eventId,
+        paddleEventId: eventId,
         eventType: eventData.eventType,
+        payload: JSON.stringify(eventData),
         processedAt: new Date(),
-        payload: JSON.stringify(eventData)
-      }
+      },
     });
 
-    return NextResponse.json({ received: true });
-  } catch (error: any) {
-    console.error("Webhook error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.log(`Webhook processed [${eventData.eventType}] in ${Date.now() - startTime}ms`);
+
+    return NextResponse.json({ 
+      received: true,
+      eventType: eventData.eventType,
+      success: !error,
+    });
+
+  } catch (err: any) {
+    console.error("Webhook error:", err.message, err.stack);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
