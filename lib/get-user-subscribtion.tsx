@@ -4,26 +4,12 @@ import { db } from "./db";
 
 
 export const getUserSubscriptionStatus = async (userId:string | undefined) => {
-        try {
-    const subscription = await db.subscription.findFirst({
+      return await db.user.findUnique({
       where: {
-        userId: userId,
-        OR: [
-           { status: "ACTIVE" },
-        ]
+        id: userId,
       },
-       orderBy: {
-        createdAt: "desc", // get the latest one if multiple match
-      },
+      include:{
+        subscription:true
+      }
     });
-
-    if (subscription) {
-      return { data: subscription, error: null };
-    } else {
-      return { data: null, error: null };
-    }
-  } catch (error) {
-    console.error("Error fetching subscription:", error);
-    return { data: null, error: "Error" };
-  }
 }

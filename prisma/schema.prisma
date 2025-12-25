@@ -19,7 +19,6 @@ model User {
   updatedAt DateTime    @updatedAt
   board     Board[]
   recording Recording[]
-  paymentAttempts PaymentAttempt[]
   subscription Subscription?
 }
 
@@ -56,49 +55,19 @@ model Recording {
 
 model Subscription {
   id                String               @id @default(uuid())
-  user              User                 @relation(fields: [userId], references: [id])
+  user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId            String               @unique
-  paddleSubscriptionId String?           @unique
-  status            SubscriptionStatus   @default(TRIALING)
-  trialEndsAt       DateTime
-  currentPeriodStart DateTime? 
-  currentPeriodEnd  DateTime?             // When the current paid period ends
-  cancelAtPeriodEnd Boolean               @default(false)
+  customerId String? @unique
+  status            PaymentStatus @default(TRIALING)
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
-  @@index([userId])
-  @@index([status])
-  @@index([paddleSubscriptionId])
 }
 
-model WebhookEvent {
-  id            String   @id @default(cuid())
-  paddleEventId String   @unique  // Paddle's event.id
-  eventType     String
-  payload       String   @db.Text
-  processedAt   DateTime @default(now())
 
-  @@index([paddleEventId])
-  @@index([processedAt])
-  @@index([eventType])
-}
-
-model PaymentAttempt {
-  id        String   @id @default(cuid())
-  userId    String
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, createdAt])
-}
-
-enum SubscriptionStatus {
+enum PaymentStatus {
   TRIALING
-  ACTIVE
-  CANCELED
-  EXPIRED
-  PAST_DUE
+  SUCCEEDED
+  FAILED
 }
 
 

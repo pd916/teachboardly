@@ -1,6 +1,6 @@
 import { getSelf } from "@/lib/auth-service"
 import { db } from "@/lib/db"
-import bcrypt from "bcrypt"
+import bcrypt from "bcryptjs"
 
 export async function POST(req:Request){
     try {
@@ -31,8 +31,7 @@ export async function POST(req:Request){
             password: hashedPassword,
             subscription:{
                 create:{
-                    status:"TRIALING",
-                    trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+                    status:"TRIALING"
                 }
             }
          },

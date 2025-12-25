@@ -8,7 +8,7 @@ import ShapesMenu from './shapes-menu'
 import Rightbar from './rightbar'
 import Recording from '@/components/Recording'
 import AddPages from './add-pages'
-import { SubscriptionStatus } from '@prisma/client'
+// import { SubscriptionStatus } from '@prisma/client'
 
 const BottomBar = ({
   activeElement, 
@@ -88,7 +88,7 @@ const BottomBar = ({
         <Recording 
         canvasRef={canvasRef}
         boardId={boardId}
-        isDisabled={userplan !== "ACTIVE"}
+        isDisabled={userplan !== "SUCCEEDED"}
         />
       )}
     </div>

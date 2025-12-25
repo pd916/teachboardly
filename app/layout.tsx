@@ -32,11 +32,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script src="https://www.desmos.com/api/v1.10/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
       </head>
       <body
+      suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} ${seymour.variable} antialiased`}
         >
           {/* <DesmosScript/> */}

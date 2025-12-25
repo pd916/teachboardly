@@ -8,6 +8,7 @@ import { Board } from "@prisma/client";
 import { redirect } from "next/navigation";
 
 const MAX_FREE_BOARDS = 8;
+const TRIAL_DAYS = 14;
 
 export const createBoard = async (values: Partial<Board>) => {
     const self = await getSelf()
@@ -19,30 +20,31 @@ export const createBoard = async (values: Partial<Board>) => {
     const userSubscriptionStatus = self?.subscription
     const now = new Date();
 
-    if(userSubscriptionStatus?.status === "TRIALING") {
-    if (new Date(userSubscriptionStatus?.trialEndsAt ) < now) {
-        // Trial expired
-        await db.subscription.update({
-            where: { id: userSubscriptionStatus.id },
-            data: { status: "EXPIRED" },
-        });
-        throw new Error("Trial expired");
+     if (!userSubscriptionStatus) {
+    throw new Error("No subscription found");
+  }
+
+    if (userSubscriptionStatus.status === "TRIALING") {
+    const trialEndDate = new Date(userSubscriptionStatus.createdAt);
+    trialEndDate.setDate(trialEndDate.getDate() + TRIAL_DAYS);
+
+    if (trialEndDate < now) {
+      // Trial expired → update status
+      await db.subscription.update({
+        where: { id: userSubscriptionStatus.id },
+        data: { status: "FAILED" },
+      });
+
+      throw new Error("Trial expired");
     }
-}
+  }
 
 
 if (
-  userSubscriptionStatus?.status === "CANCELED" ||
-  userSubscriptionStatus?.status === "EXPIRED"
-) {
-  // If no period end OR period end already passed → block
-  if (
-    !userSubscriptionStatus.currentPeriodEnd ||
-    new Date(userSubscriptionStatus.currentPeriodEnd) < now
+    userSubscriptionStatus.status === "FAILED" 
   ) {
     throw new Error("Subscription inactive");
   }
-}
     //  const boardCount = await getBoardCountByUser(self?.id!);
 
     //   const isFreePlan = self?.plan === "free";
@@ -75,13 +77,13 @@ export const savedBoard = async (boardId:string, canvasData: any) => {
 
     const subscription = self.subscription
 
-    const isProPlan =  subscription?.status === "ACTIVE";;
+    const isProPlan =  subscription?.status === "SUCCEEDED";;
 
     if (isProPlan && boardCount >= MAX_FREE_BOARDS) {
             throw new Error("Saved Board limit reached.");
         }
 
-    if(subscription?.status === "TRIALING" || subscription?.status === "CANCELED" || subscription?.status === "EXPIRED" ){
+    if(subscription?.status === "TRIALING" || subscription?.status === "FAILED" ){
         throw new Error("Free plan users cannot save boards. Upgrade to Pro.");
     }
         
@@ -142,7 +144,7 @@ export const deleteBoardOnLeave = async (boardId:string) => {
 
   if(!existingBoard) return;
 
-   const isPro = subscription?.status === 'ACTIVE';
+   const isPro = subscription?.status === 'SUCCEEDED';
 
    if (isPro && existingBoard.isArchived) {
     return;

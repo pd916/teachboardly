@@ -11,70 +11,70 @@ import { db } from "@/lib/db";
  */
 export async function GET(req: NextRequest) {
   try {
-    // CRITICAL: Verify this is actually a cron request
+    // 🔐 Verify cron request
     const authHeader = req.headers.get("authorization");
-    
-    // Option 1: Vercel Cron (free on Vercel)
+
     if (authHeader !== `Bearer ${process.env.CRONJOB_SECRET_KEY}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const now = new Date();
 
-    // Find subscriptions that should be expired
+    // ⏳ PLAN DURATION (CHANGE IF NEEDED)
+    const PLAN_DURATION_DAYS = 30;
+
+    const expiryDate = new Date(
+      now.getTime() - PLAN_DURATION_DAYS * 24 * 60 * 60 * 1000
+    );
+
+    // 🔍 Find expired subscriptions
     const expiredSubs = await db.subscription.findMany({
       where: {
-        status: "ACTIVE",
-        cancelAtPeriodEnd: true,
-        currentPeriodEnd: {
-          lt: now, // Less than now = expired
+        status: "SUCCEEDED",
+        createdAt: {
+          lt: expiryDate,
         },
       },
       select: {
         id: true,
         userId: true,
-        paddleSubscriptionId: true,
-        currentPeriodEnd: true,
+        createdAt: true,
       },
     });
 
     if (expiredSubs.length === 0) {
       console.log("[CRON] No subscriptions to expire");
-      return NextResponse.json({ 
-        success: true, 
-        expired: 0 
+      return NextResponse.json({
+        success: true,
+        expired: 0,
       });
     }
 
-    // Batch update all expired subscriptions
+    // 🔄 Expire them
     await db.subscription.updateMany({
       where: {
         id: {
-          in: expiredSubs.map(sub => sub.id),
+          in: expiredSubs.map((s) => s.id),
         },
       },
       data: {
-        status: "CANCELED",
+        status: "FAILED",
         updatedAt: now,
       },
     });
 
-    console.log(`[CRON] Expired ${expiredSubs.length} subscriptions:`, {
-      subscriptionIds: expiredSubs.map(s => s.paddleSubscriptionId),
-      timestamp: now.toISOString(),
-    });
+    console.log(`[CRON] Expired ${expiredSubs.length} subscriptions`);
 
     return NextResponse.json({
       success: true,
       expired: expiredSubs.length,
-      subscriptions: expiredSubs.map(s => ({
+      users: expiredSubs.map((s) => ({
         userId: s.userId,
-        expiredAt: s.currentPeriodEnd,
+        expiredAt: s.createdAt,
       })),
     });
-
-  } catch (error: any) {
-    console.error("[CRON] Subscription expiration error:", error);
+  } catch (error) {
+    console.error("[CRON] Error expiring subscriptions:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -82,8 +82,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// Optional: Add POST method for manual trigger during testing
+// Optional POST for testing
 export async function POST(req: NextRequest) {
-  // Same logic as GET - useful for testing
   return GET(req);
 }

@@ -1,12 +1,12 @@
 'use client'
 
 import { Check, Diamond, Loader2 } from "lucide-react";
-import {initializePaddle, Paddle} from "@paddle/paddle-js"
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
+import axios from "axios";
 
-const plans = [
+export const plans = [
   {
     name: "Basic",
     price: "$0",
@@ -43,113 +43,34 @@ const plans = [
   },
 ];
 export default function Pricing() {
-const [paddle, setPaddle] = useState<Paddle>();
   const [isLoading, setIsLoading] = useState(false);
-  const [paddleLoading, setPaddleLoading] = useState(true);
   const { data: session } = useSession();
 
-  useEffect(() => {
-    const initPaddle = async () => {
-      try {
-        // Validate environment variables
-        if (!process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) {
-          throw new Error('Paddle client token not configured');
-        }
-
-        const paddleInstance = await initializePaddle({
-          environment: 'sandbox', // Always sandbox for now
-          token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
-        });
-
-        if (paddleInstance) {
-          setPaddle(paddleInstance);
-        } else {
-          throw new Error('Paddle initialization failed');
-        }
-      } catch (error) {
-        console.error('Failed to initialize Paddle:', error);
-        toast.error('Payment system unavailable. Please try again later.');
-      } finally {
-        setPaddleLoading(false);
-      }
-    };
-
-    initPaddle();
-  }, [session?.user?.id]);
-
-  const handleCheckout = async () => {
-    // Validation checks
+ const handleCheckout = async () => {
     if (!session?.user) {
       toast.error('Please sign in to upgrade your plan');
       return;
     }
 
-    if (!paddle) {
-      toast.error('Payment system not ready. Please wait.');
-      return;
-    }
-
-    if (isLoading) return; // Prevent double-clicking
-
+    if (isLoading) return;
     setIsLoading(true);
 
     try {
-      // Create transaction on server
-      const response = await fetch('/api/payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        // Add CSRF token if you're using one
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        let errorMessage = 'Payment failed';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData?.error || errorMessage;
-        } catch {
-          // Use default error message if JSON parsing fails
+      const res = await axios.get('/api/payment')
+        if(res.data.status === 200) {
+            return (
+                window.location.href = `${res.data.session_url}`
+            )
         }
-        throw new Error(errorMessage);
-      }
-
-      const { transactionId } = await response.json();
-
-      if (!transactionId) {
-        throw new Error('Invalid transaction response');
-      }
-
-      // Open Paddle checkout
-      await paddle.Checkout.open({
-        transactionId,
-        settings: {
-          theme: 'dark',
-          locale: 'en',
-          allowLogout: false,
-          successUrl: `${window.location.origin}/success?upgrade=success`,
-          // Add customer info for better UX
-        },
-      });
-
+        setIsLoading(false)
     } catch (error) {
-      console.error('Checkout error:', error);
-      const message = error instanceof Error ? error.message : 'Payment failed';
+      const message = error instanceof Error ? error.message : 'Checkout failed';
       toast.error(message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (paddleLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Loading payment system...</span>
-      </div>
-    );
-  }
 
 
 

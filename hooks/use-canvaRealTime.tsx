@@ -210,6 +210,7 @@ export function useCanvasRealtime(boardId?: string | string[] | undefined, curre
     };
 
     const handleShapeRemoved = (objectId: string) => {
+      console.log("[handleShapeRemoved] trying to remove", objectId);
       if (!objectId) return;
       
       canvases.forEach((canva) => {
@@ -268,6 +269,7 @@ export function useCanvasRealtime(boardId?: string | string[] | undefined, curre
     })
 
     channel.on("broadcast", { event: "shape-removed" }, ({ payload }) => {
+      console.log("[listener] received delete for", payload);
       handleShapeRemoved(payload as string)
     })
 
@@ -285,7 +287,10 @@ export function useCanvasRealtime(boardId?: string | string[] | undefined, curre
     })
 
      return () => {
-    console.log("Canvas realtime hook cleanup - not removing shared channel")
+      if (channelRef.current) {
+      supabase.removeChannel(channelRef.current)
+      channelRef.current = null
+    }
   }
   }, [boardId])
 
@@ -316,12 +321,13 @@ export function useCanvasRealtime(boardId?: string | string[] | undefined, curre
   }, [currentUserId])
 
   const emitDeleteShape = useCallback((objectId: string) => {
+    console.log("[emitDeleteShape] sending delete for", objectId);
     channelRef.current?.send({
       type: "broadcast",
       event: "shape-removed",
       payload: objectId,
     })
-  }, [])
+  }, [currentUserId])
 
   const emitResetCanvas = useCallback(() => {
     channelRef.current?.send({

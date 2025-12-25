@@ -6,10 +6,11 @@ import { ArrowLeft, ArrowRight } from 'lucide-react'
 import React from 'react'
 import { toast } from 'sonner';
 import { useCanvasRealtime } from '@/hooks/use-canvaRealTime';
+import { PaymentStatus } from '@prisma/client';
 
 export type AddPagesProps = {
   boardId:string | string[] | undefined;
-  isUser?: "TRIALING" | "ACTIVE" | "EXPIRED" | "CANCELED" | "PAST_DUE";
+  isUser?: PaymentStatus;
 }
 
 const AddPages = ({ boardId, isUser}:AddPagesProps) => {
@@ -30,7 +31,7 @@ const AddPages = ({ boardId, isUser}:AddPagesProps) => {
     const isLast = activeIndex === canvases.length - 1;
 
     if (isLast) {
-      if ((isUser === "TRIALING" || isUser === "EXPIRED" || isUser === "CANCELED") && canvases.length >= 2) {
+      if ((isUser === "TRIALING" || isUser === "FAILED") && canvases.length >= 2) {
         toast.error("Upgrade your plan to add more canvases.");
         return;
       }

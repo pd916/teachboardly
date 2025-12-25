@@ -47,6 +47,7 @@ const Board = () => {
   const activeIndex = useCanvasStore((state) => state.activeIndex);
   const addCanvas = useCanvasStore((state) => state.addCanvas);
   const {user:userplan} = useCurrentUser()
+  console.log(userplan, "plan")
   // const addHistory = useCanvasStore((state) => state.addHistory);
   // const undo = useCanvasStore((state) => state.undo);
   // const redo = useCanvasStore((state) => state.redo);
@@ -435,7 +436,7 @@ useEffect(() => {
           <BottomBar
           activeElement={activeElement}
           isUser={session?.user}
-          userplan={userData?.status!}
+          userplan={userData?.status}
           handleActiveElement={handleActiveElement}
           imageInputRef={canvaFabric?.imageInputRef}
           elementAttributes={elementAttributes}
